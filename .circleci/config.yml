@@ -1,0 +1,91 @@
+defaults: &defaults
+  docker:
+    - image: circleci/node:15.2.1-browsers
+
+version: 2
+jobs:
+  pull_cbioportal_backend_codebase:
+    machine:
+      image: ubuntu-2204:2024.08.1
+    resource_class: medium
+    working_directory: /tmp/repos
+    steps:
+      - run:
+          name: Checkout cbioportal/cbioportal
+          environment:
+            BACKEND_REPO_URL: https://github.com/cBioPortal/cbioportal.git
+            BACKEND_REPO_BRANCH: demo-rfc80-poc
+          command: |
+            git clone -b ${BACKEND_REPO_BRANCH} --single-branch ${BACKEND_REPO_URL}
+      - persist_to_workspace:
+          root: /tmp/repos
+          paths:
+            - cbioportal
+
+  pull_cbioportal_frontend_codebase:
+    machine:
+      image: ubuntu-2204:2024.08.1
+    resource_class: medium
+    working_directory: /tmp/repos
+    steps:
+      - run:
+          name: Checkout cbioportal/cbioportal-frontend
+          environment:
+            FRONTEND_REPO_URL: https://github.com/alisman/cbioportal-frontend.git
+            FRONTEND_REPO_BRANCH: clickhouse
+          command: |
+            git clone -b ${FRONTEND_REPO_BRANCH} --single-branch ${FRONTEND_REPO_URL}
+      - persist_to_workspace:
+          root: /tmp/repos
+          paths:
+            - cbioportal-frontend
+
+  run_api_tests:
+    machine:
+      image: ubuntu-2204:2024.08.1
+    resource_class: large
+    working_directory: /tmp/repos
+    steps:
+      - attach_workspace:
+          at: /tmp/repos
+      - checkout
+      - run:
+          name: Instantiate a cbioportal instance
+          environment:
+            DOCKER_IMAGE_CBIOPORTAL: cbioportal/cbioportal:demo-rfc80-poc-web-shenandoah
+          command: |
+            cd cbioportal-test
+            nohup ./scripts/docker-compose.sh >> /tmp/repos/docker-compose-logs.txt 2>&1 &
+      - run:
+          name: Wait for cbioportal to be live at localhost
+          command: |
+            for i in {1..20}; do
+              if curl -s http://localhost:8080 > /dev/null; then
+                echo "cbioportal is live at localhost:8080!"
+                break
+              fi
+              echo "Waiting for cbioportal instance at localhost:8080 ..."
+              sleep 5
+            done
+      - run:
+          name: Run API Tests
+          environment:
+            API_TEST_HOST: https://localhost:8080
+            BACKEND_ROOT: /tmp/repos/cbioportal
+          command: |
+            cd cbioportal-frontend
+            nvm install 15.2.1
+            nvm use 15.2.1
+            npm install -g yarn@1.22.5
+            yarn --ignore-engines
+            yarn run apitests
+
+      - store_artifacts:
+          path: /tmp/repos/docker-compose-logs.txt
+
+workflows:
+  version: 2
+  api_tests:
+    jobs:
+      - pull_cbioportal_backend_codebase
+      - pull_cbioportal_frontend_codebase
