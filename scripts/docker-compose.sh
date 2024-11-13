@@ -11,11 +11,6 @@ cd "$TEMP_DIR/cbioportal-docker-compose" || exit 1
 # Save environment variables
 set | grep "DOCKER" >> .env
 set | grep "DB" >> .env
-set | grep "PR_NUMBER" >> .env
-
-# Update cbioportal image to use
-sed "s|DOCKER_IMAGE_CBIOPORTAL=.*|DOCKER_IMAGE_CBIOPORTAL=cbioportal/cbioportal-dev:pr-$PR_NUMBER-web-shenandoah|" .env > .env.temp
-mv .env.temp .env
 
 # Run init script
 ./init.sh
