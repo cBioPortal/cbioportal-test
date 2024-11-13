@@ -1,7 +1,7 @@
 #!/bin/sh
 
 REPO_URL="https://github.com/cBioPortal/cbioportal.git"
-DOCKER_IMAGE="cbioportal/cbioportal-dev"
+DOCKER_REPO="cbioportal/cbioportal-dev"
 PLATFORMS="linux/amd64,linux/arm64"
 DOCKERFILE_PATH_WEB="docker/web/Dockerfile"
 DOCKERFILE_PATH_WEB_DATA="docker/web-and-data/Dockerfile"
@@ -37,7 +37,7 @@ docker buildx inspect --bootstrap --builder cbioportal-test
 # Build and push Docker Image for 'web-and-data'
 docker buildx build --push \
   --platform "$PLATFORMS" \
-  --tag "$DOCKER_IMAGE:$TAG" \
+  --tag "$DOCKER_REPO:$TAG" \
   --file "$DOCKERFILE_PATH_WEB_DATA" \
   --cache-from type=gha \
   --cache-to type=gha \
@@ -46,7 +46,7 @@ docker buildx build --push \
 # Build and push Docker Image for 'web' with '-web-shenandoah' suffix
 docker buildx build --push \
   --platform "$PLATFORMS" \
-  --tag "$DOCKER_IMAGE:$TAG-web-shenandoah" \
+  --tag "$DOCKER_REPO:$TAG-web-shenandoah" \
   --file "$DOCKERFILE_PATH_WEB"  \
   --cache-from type=gha \
   --cache-to type=gha \
