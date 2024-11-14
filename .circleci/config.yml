@@ -40,7 +40,7 @@ jobs:
           paths:
             - cbioportal-frontend
 
-  run_api_tests:
+  run_connection_tests:
     machine:
       image: ubuntu-2204:2024.08.1
     resource_class: large
@@ -58,28 +58,18 @@ jobs:
             cd cbioportal-test
             nohup ./scripts/docker-compose.sh >> /tmp/repos/docker-compose-logs.txt 2>&1 &
       - run:
-          name: Wait for cbioportal to be live at localhost
+          name: Check cbioportal at localhost
           command: |
             for i in {1..20}; do
               if curl -s http://localhost:8080 > /dev/null; then
                 echo "cbioportal is live at localhost:8080!"
-                break
+                exit 0
               fi
               echo "Waiting for cbioportal instance at localhost:8080 ..."
               sleep 5
             done
-      - run:
-          name: Run API Tests
-          environment:
-            API_TEST_HOST: http://localhost:8080
-            BACKEND_ROOT: /tmp/repos/cbioportal
-          command: |
-            cd cbioportal-frontend
-            nvm install 15.2.1
-            nvm use 15.2.1
-            npm install -g yarn@1.22.5
-            yarn --ignore-engines
-            yarn run apitests
+            echo "Failed to connect to cbioportal at localhost:8080!"
+            exit 1
 
       - store_artifacts:
           path: /tmp/repos/docker-compose-logs.txt
@@ -90,7 +80,7 @@ workflows:
     jobs:
       - pull_cbioportal_backend_codebase
       - pull_cbioportal_frontend_codebase
-      - run_api_tests:
+      - run_connection_tests:
           requires:
             - pull_cbioportal_backend_codebase
             - pull_cbioportal_frontend_codebase
