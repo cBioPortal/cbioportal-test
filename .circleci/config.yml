@@ -48,7 +48,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/repos
-      - checkout
+      - checkout:
+          path: /tmp/repos/cbioportal-test
       - run:
           name: Instantiate a cbioportal instance
           environment:
