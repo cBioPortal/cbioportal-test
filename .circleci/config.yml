@@ -89,3 +89,7 @@ workflows:
     jobs:
       - pull_cbioportal_backend_codebase
       - pull_cbioportal_frontend_codebase
+      - run_api_tests:
+          requires:
+            - pull_cbioportal_backend_codebase
+            - pull_cbioportal_frontend_codebase
