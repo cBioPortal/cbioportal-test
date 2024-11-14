@@ -48,7 +48,8 @@ jobs:
     steps:
       - attach_workspace:
           at: /tmp/repos
-      - checkout
+      - checkout:
+          path: /tmp/repos/cbioportal-test
       - run:
           name: Instantiate a cbioportal instance
           environment:
@@ -70,7 +71,7 @@ jobs:
       - run:
           name: Run API Tests
           environment:
-            API_TEST_HOST: https://localhost:8080
+            API_TEST_HOST: http://localhost:8080
             BACKEND_ROOT: /tmp/repos/cbioportal
           command: |
             cd cbioportal-frontend
@@ -89,3 +90,7 @@ workflows:
     jobs:
       - pull_cbioportal_backend_codebase
       - pull_cbioportal_frontend_codebase
+      - run_api_tests:
+          requires:
+            - pull_cbioportal_backend_codebase
+            - pull_cbioportal_frontend_codebase
