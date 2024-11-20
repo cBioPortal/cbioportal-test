@@ -8,7 +8,6 @@ set -o allexport
 export DOCKER_USERNAME=<docker-username>
 export DOCKER_PASSWORD=<docker-password>
 export DOCKER_IMAGE_CBIOPORTAL=<docker-compose-image-tag>
-export PR_NUMBER=<pr-number-to-build-image-for>
 export DB_MYSQL_USERNAME=<mysql-username>
 export DB_MYSQL_PASSWORD=<mysql-password>
 export DB_MYSQL_URL=<mysql-url>
@@ -19,12 +18,19 @@ set +o allexport
 ```
 
 ## Usage
-All [scripts](./scripts) are standalone and can be run independently. They can also be configured by setting the appropriate environment variables.
-- [docker-compose.sh](./scripts/docker-compose.sh): Start a cbioportal instance at localhost:8080.
-- [build-push-image.sh](./scripts/build-push-image.sh): Build a PR-specific cbioportal image and push to cbioportal/cbioportal-dev on DockerHub.
+All [scripts](./scripts) are standalone and can be run independently. They can also be configured by setting the appropriate environment variables and flags.
 
-Run a script:
+### [build-push-image.sh](./scripts/build-push-image.sh)
+Build a docker image using the source code provided. Optionally, push to cbioportal/cbioportal-dev repo on dockerhub if _--push=true._
+
 ```shell
-chmod +x ./scripts/docker-compose.sh
+# To also push image to DockerHub, set --push=true. Default is false.
+sh ./scripts/docker-compose.sh --src=/path/to/dockerfile --push=false
+```
+
+### [docker-compose.sh](./scripts/docker-compose.sh)
+Start a cbioportal instance at localhost:8080. Set the appropriate environment variables to configure the database and docker image to use.
+
+```shell
 sh ./scripts/docker-compose.sh
 ```

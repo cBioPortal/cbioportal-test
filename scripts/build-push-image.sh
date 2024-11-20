@@ -6,25 +6,35 @@ PLATFORMS="linux/amd64,linux/arm64"
 DOCKERFILE_PATH_WEB="docker/web/Dockerfile"
 DOCKERFILE_PATH_WEB_DATA="docker/web-and-data/Dockerfile"
 APP_PROPERTIES_PATH="src/main/resources/application.properties"
+TAG="cbioportal"
 
-# Create a temporary directory and clone the repo
+# Get named arguments
+for ARGUMENT in "$@";
+do
+  export $(echo $ARGUMENT | cut -f1 -d=|cut -d '-' -f 3)=${ARGUMENT:$(echo  $ARGUMENT | cut -f1 -d=|wc -L)+1};
+done
+
+# Check required args
+if [ ! "$src" ]; then
+  echo "Missing required args. Usage: ./scripts/build-push-image.sh --src=/path/to/src [--push=false]"
+  exit 1
+else
+  src=$(eval echo $src)
+fi
+
+# Create a temporary directory and cp --src
 ROOT_DIR=$(pwd)
 TEMP_DIR=$(mktemp -d)
-git clone "$REPO_URL" "$TEMP_DIR/cbioportal"
+cp -r "$src" "$TEMP_DIR/cbioportal"
 cd "$TEMP_DIR/cbioportal" || exit 1
-
-# Fetch the pull request and check it out
-git fetch origin "pull/$PR_NUMBER/head:pr-$PR_NUMBER"
-git checkout "pr-$PR_NUMBER"
 
 # Create application.properties
 cp "$APP_PROPERTIES_PATH.EXAMPLE" "$APP_PROPERTIES_PATH"
 
-# Set tag based on PR number
-TAG="pr-$PR_NUMBER"
-
-# Login to DockerHub
-echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+# Login to DockerHub if push=true
+if [ "$push" ] && [ "$push" = "true" ]; then
+  echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
+fi
 
 #  Set up QEMU (for multi-platform builds)
 docker pull docker.io/tonistiigi/binfmt:latest
@@ -34,8 +44,17 @@ docker run --rm --privileged docker.io/tonistiigi/binfmt:latest --install all
 docker buildx use cbioportal-test > /dev/null || docker buildx create --name cbioportal-test --driver docker-container --use
 docker buildx inspect --bootstrap --builder cbioportal-test
 
-# Build and push Docker Image for 'web-and-data'
-docker buildx build --push \
+# Check if --push=true
+if [ "$push" = "true" ]; then
+  PUSH_FLAG="--push";
+else
+  PUSH_FLAG="";
+fi
+
+# Build Docker Image for 'web-and-data'. Push if --push=true
+docker buildx build $PUSH_FLAG \
+  --load \
+  --metadata-file web-and-data-metadata.json \
   --platform "$PLATFORMS" \
   --tag "$DOCKER_REPO:$TAG" \
   --file "$DOCKERFILE_PATH_WEB_DATA" \
@@ -43,8 +62,10 @@ docker buildx build --push \
   --cache-to type=gha \
   .
 
-# Build and push Docker Image for 'web' with '-web-shenandoah' suffix
-docker buildx build --push \
+# Build Docker Image for 'web' with '-web-shenandoah' suffix. Push if --push=true
+docker buildx build $PUSH_FLAG \
+  --load \
+  --metadata-file "$ROOT_DIR"/web-metadata.json \
   --platform "$PLATFORMS" \
   --tag "$DOCKER_REPO:$TAG-web-shenandoah" \
   --file "$DOCKERFILE_PATH_WEB"  \
