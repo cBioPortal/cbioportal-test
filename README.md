@@ -8,6 +8,7 @@ set -o allexport
 export DOCKER_USERNAME=<docker-username>
 export DOCKER_PASSWORD=<docker-password>
 export DOCKER_IMAGE_CBIOPORTAL=<docker-compose-image-tag>
+export DOCKER_TAG=<build-tag>
 export DB_MYSQL_USERNAME=<mysql-username>
 export DB_MYSQL_PASSWORD=<mysql-password>
 export DB_MYSQL_URL=<mysql-url>
@@ -21,7 +22,7 @@ set +o allexport
 All [scripts](./scripts) are standalone and can be run independently. They can also be configured by setting the appropriate environment variables and flags.
 
 ### [build-push-image.sh](./scripts/build-push-image.sh)
-Build a docker image using the source code provided. Optionally, push to cbioportal/cbioportal-dev repo on dockerhub if _--push=true._
+Build a docker image using the source code provided. Optionally, push to cbioportal/cbioportal-dev repo on dockerhub if _--push=true._ The new image is tagged using environment variables: DOCKER_REPO:DOCKER_TAG
 
 ```shell
 # To also push image to DockerHub, set --push=true. Default is false.
