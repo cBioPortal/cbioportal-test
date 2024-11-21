@@ -58,7 +58,7 @@ fi
 docker buildx build $PUSH_FLAG \
   --metadata-file web-and-data-metadata.json \
   --platform "$PLATFORMS" \
-  --tag "$DOCKER_REPO:$TAG" \
+  --tag "$DOCKER_REPO:$DOCKER_TAG" \
   --file "$DOCKERFILE_PATH_WEB_DATA" \
   --cache-from type=gha \
   --cache-to type=gha \
@@ -68,7 +68,7 @@ docker buildx build $PUSH_FLAG \
 docker buildx build $PUSH_FLAG \
   --metadata-file "$ROOT_DIR"/web-metadata.json \
   --platform "$PLATFORMS" \
-  --tag "$DOCKER_REPO:$TAG-web-shenandoah" \
+  --tag "$DOCKER_REPO:$DOCKER_TAG-web-shenandoah" \
   --file "$DOCKERFILE_PATH_WEB"  \
   --cache-from type=gha \
   --cache-to type=gha \
