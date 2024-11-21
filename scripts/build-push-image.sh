@@ -52,12 +52,16 @@ docker buildx inspect --bootstrap --builder cbioportal-test
 if [ "$push" = "true" ]; then
   PUSH_FLAG="--push";
 else
-  PUSH_FLAG="";
+  PUSH_FLAG="--load";
+fi
+
+# Custom configuration for circleci builds
+if [ "$CI" = "true" ]; then
+  PLATFORMS="linux/amd64"
 fi
 
 # Build Docker Image for 'web-and-data'. Push if --push=true
 docker buildx build $PUSH_FLAG \
-  --load \
   --metadata-file web-and-data-metadata.json \
   --platform "$PLATFORMS" \
   --tag "$DOCKER_REPO:$TAG" \
@@ -68,7 +72,6 @@ docker buildx build $PUSH_FLAG \
 
 # Build Docker Image for 'web' with '-web-shenandoah' suffix. Push if --push=true
 docker buildx build $PUSH_FLAG \
-  --load \
   --metadata-file "$ROOT_DIR"/web-metadata.json \
   --platform "$PLATFORMS" \
   --tag "$DOCKER_REPO:$TAG-web-shenandoah" \
