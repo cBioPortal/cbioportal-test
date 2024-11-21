@@ -11,7 +11,11 @@ TAG="cbioportal"
 # Get named arguments
 for ARGUMENT in "$@";
 do
-  export $(echo $ARGUMENT | cut -f1 -d=|cut -d '-' -f 3)=${ARGUMENT:$(echo  $ARGUMENT | cut -f1 -d=|wc -L)+1};
+  key=$(echo "$ARGUMENT" | cut -f1 -d= )
+  key_length=$(echo "$key" | awk '{print length}')
+  key=$(echo "$key" | cut -d'-' -f3)
+  value=$(echo "$ARGUMENT" | cut -c$((key_length + 2))-)
+  export "$key"="$value"
 done
 
 # Check required args
