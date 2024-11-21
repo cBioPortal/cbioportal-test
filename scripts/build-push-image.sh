@@ -6,7 +6,6 @@ PLATFORMS="linux/amd64,linux/arm64"
 DOCKERFILE_PATH_WEB="docker/web/Dockerfile"
 DOCKERFILE_PATH_WEB_DATA="docker/web-and-data/Dockerfile"
 APP_PROPERTIES_PATH="src/main/resources/application.properties"
-TAG="cbioportal"
 
 # Get named arguments
 for ARGUMENT in "$@";
