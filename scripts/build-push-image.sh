@@ -55,11 +55,6 @@ else
   PUSH_FLAG="--load";
 fi
 
-# Custom configuration for circleci builds
-if [ "$CI" = "true" ]; then
-  PLATFORMS="linux/amd64"
-fi
-
 # Build Docker Image for 'web-and-data'. Push if --push=true
 docker buildx build $PUSH_FLAG \
   --metadata-file web-and-data-metadata.json \
