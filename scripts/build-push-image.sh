@@ -69,6 +69,8 @@ if [ ! "$skip_web_and_data" = "true" ]; then
     --cache-from type=gha \
     --cache-to type=gha \
     .
+else
+  echo "Skipping web-and-data image!"
 fi
 
 # Build Docker Image for 'web' with '-web-shenandoah' suffix. Push if --push=true
@@ -81,6 +83,8 @@ if [ ! "$skip_web" = "true" ]; then
     --cache-from type=gha \
     --cache-to type=gha \
     .
+else
+  echo "Skipping web-shenandoah image!"
 fi
 
 # Cleanup

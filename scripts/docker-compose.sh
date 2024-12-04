@@ -1,6 +1,6 @@
 #!/bin/sh
 
-REPO_URL="https://github.com/zainasir/cbioportal-docker-compose.git"
+REPO_URL="https://github.com/cbioportal/cbioportal-docker-compose.git"
 
 # Create a temporary directory and clone the repo
 ROOT_DIR=$(pwd)
