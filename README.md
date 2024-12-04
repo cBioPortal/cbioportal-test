@@ -22,7 +22,12 @@ set +o allexport
 All [scripts](./scripts) are standalone and can be run independently. They can also be configured by setting the appropriate environment variables and flags.
 
 ### [build-push-image.sh](./scripts/build-push-image.sh)
-Build a docker image using the source code provided. Optionally, push to cbioportal/cbioportal-dev repo on dockerhub if _--push=true._ The new image is tagged using environment variables: DOCKER_REPO:DOCKER_TAG
+Build a docker image using the source code provided.
+#### Args:
+- _--src=/path/to/dockerfile_ (REQUIRED)
+- _--push=false_ (If _true_, push to cbioportal/cbioportal-dev on dockerhub)
+- _--skip_web=false_ (If _true_, skip building the web-shenandoah image)
+- _--skip_web_and_data=false_ (If _true_, skip building the web-and-data image)
 
 ```shell
 # To also push image to DockerHub, set --push=true. Default is false.

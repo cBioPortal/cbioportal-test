@@ -19,10 +19,10 @@ done
 
 # Check required args
 if [ ! "$src" ]; then
-  echo "Missing required args. Usage: ./scripts/build-push-image.sh --src=/path/to/src [--push=false]"
+  echo "Missing required args. Usage: ./scripts/build-push-image.sh --src=/path/to/src [--push=false] [--skip_web=false] [--skip_web_and_data=false]"
   exit 1
 else
-  src=$(eval echo $src)
+  src=$(eval echo "$src")
 fi
 
 # Create a temporary directory and cp --src
@@ -47,32 +47,41 @@ docker run --rm --privileged docker.io/tonistiigi/binfmt:latest --install all
 docker buildx use cbioportal-test > /dev/null || docker buildx create --name cbioportal-test --driver docker-container --use
 docker buildx inspect --bootstrap --builder cbioportal-test
 
-# Check if --push=true
+# Push if --push=true, else load to local docker registry
 if [ "$push" = "true" ]; then
   PUSH_FLAG="--push";
 else
   PUSH_FLAG="--load";
 fi
 
+# Check if both images are skipped
+if [ "$skip_web" = "true" ] && [ "$skip_web_and_data" = "true" ]; then
+  echo "WARNING: Skipping both images!"
+fi
+
 # Build Docker Image for 'web-and-data'. Push if --push=true
-docker buildx build $PUSH_FLAG \
-  --metadata-file web-and-data-metadata.json \
-  --platform "$PLATFORMS" \
-  --tag "$DOCKER_REPO:$DOCKER_TAG" \
-  --file "$DOCKERFILE_PATH_WEB_DATA" \
-  --cache-from type=gha \
-  --cache-to type=gha \
-  .
+if [ ! "$skip_web_and_data" = "true" ]; then
+  docker buildx build $PUSH_FLAG \
+    --metadata-file web-and-data-metadata.json \
+    --platform "$PLATFORMS" \
+    --tag "$DOCKER_REPO:$DOCKER_TAG" \
+    --file "$DOCKERFILE_PATH_WEB_DATA" \
+    --cache-from type=gha \
+    --cache-to type=gha \
+    .
+fi
 
 # Build Docker Image for 'web' with '-web-shenandoah' suffix. Push if --push=true
-docker buildx build $PUSH_FLAG \
-  --metadata-file "$ROOT_DIR"/web-metadata.json \
-  --platform "$PLATFORMS" \
-  --tag "$DOCKER_REPO:$DOCKER_TAG-web-shenandoah" \
-  --file "$DOCKERFILE_PATH_WEB"  \
-  --cache-from type=gha \
-  --cache-to type=gha \
-  .
+if [ ! "$skip_web" = "true" ]; then
+  docker buildx build $PUSH_FLAG \
+    --metadata-file "$ROOT_DIR"/web-metadata.json \
+    --platform "$PLATFORMS" \
+    --tag "$DOCKER_REPO:$DOCKER_TAG-web-shenandoah" \
+    --file "$DOCKERFILE_PATH_WEB"  \
+    --cache-from type=gha \
+    --cache-to type=gha \
+    .
+fi
 
 # Cleanup
 cd "$ROOT_DIR"
