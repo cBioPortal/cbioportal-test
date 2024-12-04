@@ -9,6 +9,7 @@ git clone "$REPO_URL" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose" || exit 1
 
 # Save environment variables
+echo "" >> .env
 set | grep -e "DOCKER" -e "DB" >> .env
 
 # Run init script
