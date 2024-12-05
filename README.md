@@ -41,6 +41,7 @@ Start a cbioportal instance at localhost:8080. Set the appropriate environment v
 
 #### Args:
 - _--portal_type=web_ (If _--portal_type=web-and-data_, launch the web-and-data image.)
+- _--docker_args_ (Optional docker compose args, e.g. '_--detach --build_')
 
 ```shell
 sh ./scripts/docker-compose.sh --portal_type=web
