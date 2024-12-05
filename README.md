@@ -20,9 +20,11 @@ set +o allexport
 
 ## Usage
 All [scripts](./scripts) are standalone and can be run independently. They can also be configured by setting the appropriate environment variables and flags.
+> NOTE: Call scripts from the root directory. If called from any other subdirectory, the relative paths used by scripts will not work.
 
 ### [build-push-image.sh](./scripts/build-push-image.sh)
 Build a docker image using the source code provided.
+
 #### Args:
 - _--src=/path/to/dockerfile_ (REQUIRED)
 - _--push=false_ (If _true_, push to cbioportal/cbioportal-dev on dockerhub)
@@ -37,6 +39,16 @@ sh ./scripts/docker-compose.sh --src=/path/to/dockerfile --push=false
 ### [docker-compose.sh](./scripts/docker-compose.sh)
 Start a cbioportal instance at localhost:8080. Set the appropriate environment variables to configure the database and docker image to use.
 
+#### Args:
+- _--portal_type=web_ (If _--portal_type=web-and-data_, launch the web-and-data image.)
+
 ```shell
-sh ./scripts/docker-compose.sh
+sh ./scripts/docker-compose.sh --portal_type=web
+```
+
+## Troubleshoots
+If docker compose gets stuck at "_Database not available yet (first time can take a few minutes to load seed database)... Attempting reconnect..._", try pruning the docker system and rerun script:
+```shell
+docker system prune -a
+./scripts/docker-compose.sh
 ```
