@@ -2,21 +2,28 @@
 
 REPO_URL="https://github.com/cbioportal/cbioportal-docker-compose.git"
 
+# Get named arguments
+. utils/parse_args.sh "$@"
+
 # Create a temporary directory and clone the repo
 ROOT_DIR=$(pwd)
 TEMP_DIR=$(mktemp -d)
 git clone "$REPO_URL" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose" || exit 1
 
-# Save environment variables
+# Save environment variables that start with DOCKER or DB
 echo "" >> .env
-set | grep -e "DOCKER" -e "DB" >> .env
+set | grep -e "^DOCKER" -e "^DB" >> .env
 
 # Run init script
 ./init.sh
 
 # Start docker compose container
-docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up
+if [ "$portal_type" ] && [ "$portal_type" = "web-and-data" ]; then
+  docker compose up
+else
+  docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up
+fi
 
 # Cleanup
 cd "$ROOT_DIR"

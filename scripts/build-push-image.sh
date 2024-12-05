@@ -8,14 +8,7 @@ DOCKERFILE_PATH_WEB_DATA="docker/web-and-data/Dockerfile"
 APP_PROPERTIES_PATH="src/main/resources/application.properties"
 
 # Get named arguments
-for ARGUMENT in "$@";
-do
-  key=$(echo "$ARGUMENT" | cut -f1 -d= )
-  key_length=$(echo "$key" | awk '{print length}')
-  key=$(echo "$key" | cut -d'-' -f3)
-  value=$(echo "$ARGUMENT" | cut -c$((key_length + 2))-)
-  export "$key"="$value"
-done
+. utils/parse_args.sh "$@"
 
 # Check required args
 if [ ! "$src" ]; then
