@@ -18,18 +18,11 @@ set | grep -e "^DOCKER" -e "^DB" >> .env
 # Run init script
 ./init.sh
 
-# Check if daemon mode is enabled
-if [ "$daemon" ] && [ "$daemon" = "true" ]; then
-  DAEMON='--detach'
-else
-  DAEMON=''
-fi
-
-# Start docker compose container
+# Start docker compose container. Also pass any option docker compose args from the command line
 if [ "$portal_type" ] && [ "$portal_type" = "web-and-data" ]; then
-  docker compose up $DAEMON
+  docker compose up $docker_args
 else
-  docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up $DAEMON
+  docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up $docker_args
 fi
 
 # Cleanup
