@@ -13,7 +13,7 @@ cd "$TEMP_DIR/cbioportal-docker-compose" || exit 1
 
 # Save environment variables that start with DOCKER or DB
 echo "" >> .env
-set | grep -e "^DOCKER" -e "^DB" >> .env
+set | grep -e "^DOCKER" -e "^DB" -e "^APP" >> .env
 
 # Run init script
 ./init.sh
