@@ -24,7 +24,3 @@ if [ "$portal_type" ] && [ "$portal_type" = "web-and-data" ]; then
 else
   docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up $docker_args
 fi
-
-# Cleanup
-cd "$ROOT_DIR"
-rm -rf "$TEMP_DIR"
