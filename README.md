@@ -54,7 +54,7 @@ Import data into a cbioportal instance running at localhost:8080.
 - _--study_list=/path/to/study_list.txt_ (REQUIRED. File containing whitespace-delimited list of studies to import)
 
 ```shell
-sh ./scripts/study-list.sh --study_list=/path/to/study_list.txt
+sh ./scripts/import-data.sh --study_list=/path/to/study_list.txt
 ```
 
 ## Troubleshoots
