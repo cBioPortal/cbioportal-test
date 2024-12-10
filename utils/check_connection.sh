@@ -18,7 +18,7 @@ for i in {1..20}; do
     exit 0
   fi
   echo "Waiting for connection at $url ..."
-  sleep 1
+  sleep 5
 done
 echo "Failed to establish connection at $url!"
 exit 1
