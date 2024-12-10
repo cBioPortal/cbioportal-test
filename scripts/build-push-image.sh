@@ -8,7 +8,7 @@ DOCKERFILE_PATH_WEB_DATA="docker/web-and-data/Dockerfile"
 APP_PROPERTIES_PATH="src/main/resources/application.properties"
 
 # Get named arguments
-. utils/parse_args.sh "$@"
+. utils/parse-args.sh "$@"
 
 # Check required args
 if [ ! "$src" ]; then
