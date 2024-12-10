@@ -3,7 +3,7 @@
 REPO_URL="https://github.com/cbioportal/cbioportal-docker-compose.git"
 
 # Get named arguments
-. utils/parse_args.sh "$@"
+. utils/parse-args.sh "$@"
 
 # Create a temporary directory and clone the repo
 ROOT_DIR=$(pwd)

@@ -4,7 +4,7 @@ set -e
 DOCKER_COMPOSE_REPO="https://github.com/cbioportal/cbioportal-docker-compose.git"
 
 # Get named arguments
-. utils/parse_args.sh "$@"
+. utils/parse-args.sh "$@"
 
 # Check required args
 if [ ! "$study_list" ] ; then
@@ -32,7 +32,7 @@ cd "$TEMP_DIR/study" || exit 1
 # Check cbioportal is live at localhost:8080 and get portal version
 printf "\nChecking cbioportal portal at localhost:8080 ...\n\n"
 cd "$ROOT_DIR"
-utils/check_connection.sh --url=localhost:8080
+utils/check-connection.sh --url=localhost:8080
 PORTAL_VERSION=$(docker inspect cbioportal-container | jq -r '.[0].Config.Image')
 
 # Clone docker compose repo
@@ -40,7 +40,7 @@ git clone "$DOCKER_COMPOSE_REPO" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose"
 
 # Download schema
-docker run --rm -it $PORTAL_VERSION cat /cbioportal/db-scripts/cgds.sql > "$TEMP_DIR/cbioportal-docker-compose/data/cgds.sql"
+docker run --rm -it "$PORTAL_VERSION" cat /cbioportal/db-scripts/cgds.sql > "$TEMP_DIR/cbioportal-docker-compose/data/cgds.sql"
 
 # Download seed database
 wget -O "$TEMP_DIR/cbioportal-docker-compose/data/seed.sql.gz" "https://github.com/cBioPortal/datahub/raw/master/seedDB/seedDB_hg19_archive/seed-cbioportal_hg19_v2.12.14.sql.gz"

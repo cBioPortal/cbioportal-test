@@ -3,7 +3,7 @@
 # Reusable script that gets named arguments from the command line
 # Args format is --key=value
 # Source this script at the top of other scripts:
-# . /path/to/this/script/parse_args.sh "$@"
+# . /path/to/this/script/parse-args.sh "$@"
 
 for ARGUMENT in "$@";
 do
