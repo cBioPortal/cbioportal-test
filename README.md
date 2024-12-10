@@ -47,6 +47,16 @@ Start a cbioportal instance at localhost:8080. Set the appropriate environment v
 sh ./scripts/docker-compose.sh --portal_type=web
 ```
 
+### [import-data.sh](./scripts/import-data.sh)
+Import data into a cbioportal instance running at localhost:8080.
+
+#### Args:
+- _--study_list=/path/to/study_list.txt_ (REQUIRED. File containing whitespace-delimited list of studies to import)
+
+```shell
+sh ./scripts/study-list.sh --study_list=/path/to/study_list.txt
+```
+
 ## Troubleshoots
 If docker compose gets stuck at "_Database not available yet (first time can take a few minutes to load seed database)... Attempting reconnect..._", try pruning the docker system and rerun script:
 ```shell
