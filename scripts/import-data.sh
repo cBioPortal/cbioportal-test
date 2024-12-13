@@ -3,26 +3,6 @@ set -e
 
 DOCKER_COMPOSE_REPO="https://github.com/cbioportal/cbioportal-docker-compose.git"
 
-# Get named arguments
-. utils/parse-args.sh "$@"
-
-# Check required args
-if [ ! "$study_list" ] ; then
-  echo "Missing required args. Usage: ./scripts/import-data.sh --study_list=/path/to/studies_list.txt"
-  exit 1
-else
-  study_list=$(eval echo "$study_list")
-fi
-
-# Check study list file is correctly formatted
-if [ "${study_list##*.}" != "txt" ]; then
-  echo "Error: File '$study_list' must have a .txt extension."
-  exit 1
-fi
-
-# Read study names from file
-STUDY_NAMES=$(tr -s '[:space:]' '\n' < "$study_list" | awk '{if ($0 ~ /^[a-zA-Z0-9_-]+$/) print $0}' | sort | uniq)
-
 # Create a temporary directory
 ROOT_DIR=$(pwd)
 TEMP_DIR=$(mktemp -d)
@@ -39,23 +19,29 @@ PORTAL_VERSION=$(docker inspect cbioportal-container | jq -r '.[0].Config.Image'
 git clone "$DOCKER_COMPOSE_REPO" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose"
 
-# Download schema
-docker run --rm -it "$PORTAL_VERSION" cat /cbioportal/db-scripts/cgds.sql > "$TEMP_DIR/cbioportal-docker-compose/data/cgds.sql"
+# Copy schema to database container
+SCHEMA_PATH=$(docker inspect cbioportal-database-container | jq -r '.[].Mounts[].Source' | grep 'cgds.sql')
+cp "$ROOT_DIR/data/cgds.sql" "$SCHEMA_PATH"
 
-# Download seed database
-wget -O "$TEMP_DIR/cbioportal-docker-compose/data/seed.sql.gz" "https://github.com/cBioPortal/datahub/raw/master/seedDB/seedDB_hg19_archive/seed-cbioportal_hg19_v2.12.14.sql.gz"
+# Copy seed to database container
+SEED_PATH=$(docker inspect cbioportal-database-container | jq -r '.[].Mounts[].Source' | grep 'seed.sql.gz')
+cp "$ROOT_DIR/data/seed.sql.gz" "$SEED_PATH"
 
-# Download studies
-printf "\nDownloading studies...\n\n"
-for STUDY in ${STUDY_NAMES}; do
-  wget -O "$TEMP_DIR/cbioportal-docker-compose/study/$STUDY".tar.gz "https://cbioportal-datahub.s3.amazonaws.com/${STUDY}.tar.gz"
-  tar xvfz "$TEMP_DIR/cbioportal-docker-compose/study/$STUDY".tar.gz -C "$TEMP_DIR/cbioportal-docker-compose/study/"
-done
+# Copy study and genesets to database container
+STUDY_PATH=$(docker inspect cbioportal-container | jq -r '.[].Mounts[].Source' | grep 'study')
+cp -r "$ROOT_DIR/data/study_es_0" "$STUDY_PATH/study_es_0"
+cp -r "$ROOT_DIR/data/genesets" "$STUDY_PATH/genesets"
 
-# Import studies and restart portal
-printf "\nImporting studies ...\n\n"
+# Import genepanel data
 cd "$TEMP_DIR/cbioportal-docker-compose"
-for STUDY in ${STUDY_NAMES}; do
-  docker compose exec cbioportal metaImport.py -u http://cbioportal:8080 -s "study/$STUDY/" -o
-done
-docker compose restart cbioportal
+docker compose exec cbioportal sh -c 'cd /core/scripts/ \
+  && ./importGenePanel.pl --data /study/study_es_0/data_gene_panel_testpanel1.txt \
+  && ./importGenePanel.pl --data /study/study_es_0/data_gene_panel_testpanel2.txt \
+  && ./importGenesetData.pl --data /study/genesets/study_es_0_genesets.gmt --new-version msigdb_7.5.1 \
+      --sup /study/genesets/study_es_0_supp-genesets.txt --confirm-delete-all-genesets-hierarchy-genesetprofiles\
+  && ./importGenesetHierarchy.pl --data /study/genesets/study_es_0_tree.yaml'
+
+# Load test study
+cd "$TEMP_DIR/cbioportal-docker-compose"
+docker compose restart cbioportal-database
+docker compose exec cbioportal metaImport.py -u http://localhost:8080 -s "study/study_es_0/" -o
