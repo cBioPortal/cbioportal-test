@@ -48,13 +48,10 @@ sh ./scripts/docker-compose.sh --portal_type=web
 ```
 
 ### [import-data.sh](./scripts/import-data.sh)
-Import data into a cbioportal instance running at localhost:8080.
-
-#### Args:
-- _--study_list=/path/to/study_list.txt_ (REQUIRED. File containing whitespace-delimited list of studies to import)
+Import [test data](./data) into a cbioportal instance running at localhost:8080.
 
 ```shell
-sh ./scripts/import-data.sh --study_list=/path/to/study_list.txt
+sh ./scripts/import-data.sh
 ```
 
 ## Troubleshoots
