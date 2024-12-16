@@ -50,8 +50,13 @@ sh ./scripts/docker-compose.sh --portal_type=web
 ### [import-data.sh](./scripts/import-data.sh)
 Import [test data](./data) into a cbioportal instance running at localhost:8080.
 
+#### Args:
+- _--seed=/path/to/seed.sql.gz_ (REQUIRED)
+- _--schema=/path/to/schema.sql_ (REQUIRED)
+- _--studies=/path/to/studies-dir_ (REQUIRED)
+
 ```shell
-sh ./scripts/import-data.sh
+sh ./scripts/import-data.sh --seed=/path/to/seed.sql.gz --schema=/path/to/schema.sql --studies=/path/to/studies-dir
 ```
 
 ## Troubleshoots
