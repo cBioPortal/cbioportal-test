@@ -11,15 +11,27 @@ else
   url=$(eval echo "$url")
 fi
 
+# Set interval and max retries, if given.
+if [ "$interval" ]; then
+  INTERVAL=$interval
+else
+  INTERVAL=5
+fi
+if [ "$max_retries" ]; then
+  MAX_RETRIES=$max_retries
+else
+  MAX_RETRIES=20
+fi
+
 # Check connection
 i=0
-while [ $i -le 20 ]; do
+while [ $i -lt $MAX_RETRIES ]; do
   if curl -s "$url" > /dev/null; then
     echo "Connection successfully established at $url!"
     exit 0
   fi
   echo "Waiting for connection at $url ..."
-  sleep 5
+  sleep $INTERVAL
   i=$(( i + 1 ))
 done
 echo "Failed to establish connection at $url!"
