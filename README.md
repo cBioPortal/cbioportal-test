@@ -59,9 +59,12 @@ Import [test data](./data) into a cbioportal instance running at localhost:8080.
 sh ./scripts/import-data.sh --seed=/path/to/seed.sql.gz --schema=/path/to/schema.sql --studies=/path/to/studies-dir
 ```
 
+### Util Scripts
+[utils](./utils) is a collection of scripts that are used in main scripts for improved modularity. See [documentation](./utils/README.md) for usage instructions.
+
 ## Troubleshoots
 If docker compose gets stuck at "_Database not available yet (first time can take a few minutes to load seed database)... Attempting reconnect..._", try pruning the docker system and rerun script:
 ```shell
-docker system prune -a
+docker system prune --all --volumes
 ./scripts/docker-compose.sh
 ```
