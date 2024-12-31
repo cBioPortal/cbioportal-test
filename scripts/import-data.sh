@@ -59,7 +59,10 @@ docker compose exec cbioportal sh -c 'cd /core/scripts/ \
       --sup /study/genesets/study_es_0_supp-genesets.txt --confirm-delete-all-genesets-hierarchy-genesetprofiles\
   && ./importGenesetHierarchy.pl --data /study/genesets/study_es_0_tree.yaml'
 
-# Load test study
+# Load studies from given directory
 cd "$TEMP_DIR/cbioportal-docker-compose"
 docker compose restart cbioportal-database
-docker compose exec cbioportal metaImport.py -u http://localhost:8080 -s "study/study_es_0/" -o
+find "$studies" -type d -mindepth 1 -maxdepth 1 | while read -r DIR; do
+  STUDY_NAME=$(basename "$DIR")
+  docker compose exec -T cbioportal metaImport.py -u http://localhost:8080 -s "study/$STUDY_NAME/" -o
+done
