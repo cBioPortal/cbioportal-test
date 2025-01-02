@@ -18,9 +18,9 @@ set | grep -e "^DOCKER" -e "^DB" -e "^APP" >> .env
 # Run init script
 ./init.sh
 
-# Start docker compose container. Also pass any option docker compose args from the command line
+# Start docker compose container. Also pass any additional compose extensions and optional docker compose args from the command line
 if [ "$portal_type" ] && [ "$portal_type" = "web-and-data" ]; then
-  docker compose up $docker_args
+  docker compose -f docker-compose.yml $compose_extensions up $docker_args
 else
-  docker compose -f docker-compose.yml -f dev/docker-compose.web.yml up $docker_args
+  docker compose -f docker-compose.yml -f dev/docker-compose.web.yml $compose_extensions up $docker_args
 fi

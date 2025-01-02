@@ -42,9 +42,10 @@ Start a cbioportal instance at localhost:8080. Set the appropriate environment v
 #### Args:
 - _--portal_type=web_ (If _--portal_type=web-and-data_, launch the web-and-data image.)
 - _--docker_args_ (Optional docker compose args, e.g. '_--detach --build_')
+- _--compose_extensions_ (Additional compose files to override default, e.g. '_-f docker-compose.test.yml_')
 
 ```shell
-sh ./scripts/docker-compose.sh --portal_type=web
+sh ./scripts/docker-compose.sh --portal_type=web [--docker_args='-d'] [--compose_extensions='-f docker-compose.test.yml']
 ```
 
 ### [import-data.sh](./scripts/import-data.sh)
