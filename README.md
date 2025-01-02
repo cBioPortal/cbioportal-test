@@ -33,7 +33,7 @@ Build a docker image using the source code provided.
 
 ```shell
 # To also push image to DockerHub, set --push=true. Default is false.
-sh ./scripts/docker-compose.sh --src=/path/to/dockerfile --push=false
+sh ./scripts/build-push-image.sh --src=/path/to/dockerfile --push=false
 ```
 
 ### [docker-compose.sh](./scripts/docker-compose.sh)
