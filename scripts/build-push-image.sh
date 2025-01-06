@@ -40,11 +40,18 @@ docker run --rm --privileged docker.io/tonistiigi/binfmt:latest --install all
 docker buildx use cbioportal-test > /dev/null || docker buildx create --name cbioportal-test --driver docker-container --use
 docker buildx inspect --bootstrap --builder cbioportal-test
 
-# Push if --push=true, else load to local docker registry
+# Push if --push=true, else load to local docker registry and only build single architecture
 if [ "$push" = "true" ]; then
   PUSH_FLAG="--push";
 else
   PUSH_FLAG="--load";
+  ARCHITECTURE=$(uname -m);
+  if [ "$ARCHITECTURE" = "x86_64" ]; then
+    PLATFORMS="linux/amd64";
+  elif [ "$ARCHITECTURE" = "aarch64" ]; then
+    PLATFORMS="linux/arm64";
+  else
+    echo "Host OS not supported! Defaulting to 'linux/amd64,linux/arm64'."
 fi
 
 # Check if both images are skipped
