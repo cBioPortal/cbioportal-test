@@ -51,7 +51,8 @@ else
   elif [ "$ARCHITECTURE" = "aarch64" ]; then
     PLATFORMS="linux/arm64";
   else
-    echo "Host OS not supported! Defaulting to 'linux/amd64,linux/arm64'."
+    echo "Host OS not supported! Defaulting to 'linux/amd64,linux/arm64'.";
+  fi
 fi
 
 # Check if both images are skipped
