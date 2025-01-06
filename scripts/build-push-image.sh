@@ -55,7 +55,6 @@ fi
 # Build Docker Image for 'web-and-data'. Push if --push=true
 if [ ! "$skip_web_and_data" = "true" ]; then
   docker buildx build $PUSH_FLAG \
-    --metadata-file web-and-data-metadata.json \
     --platform "$PLATFORMS" \
     --tag "$DOCKER_REPO:$DOCKER_TAG" \
     --file "$DOCKERFILE_PATH_WEB_DATA" \
@@ -69,7 +68,6 @@ fi
 # Build Docker Image for 'web' with '-web-shenandoah' suffix. Push if --push=true
 if [ ! "$skip_web" = "true" ]; then
   docker buildx build $PUSH_FLAG \
-    --metadata-file "$ROOT_DIR"/web-metadata.json \
     --platform "$PLATFORMS" \
     --tag "$DOCKER_REPO:$DOCKER_TAG-web-shenandoah" \
     --file "$DOCKERFILE_PATH_WEB"  \
