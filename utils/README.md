@@ -13,7 +13,7 @@ Runs a periodic, finite loop to check if a server is live at the given url.
 - _--max_retries=20_ (OPTIONAL. Maximum number of requests to send. Defaults to 20)
 
 ```shell
-sh ./scripts/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=20
+sh ./utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=20
 ```
 
 ### [parse-args.sh](./parse-args.sh)
