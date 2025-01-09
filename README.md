@@ -60,8 +60,22 @@ Import [test data](./data) into a cbioportal instance running at localhost:8080.
 sh ./scripts/import-data.sh --seed=/path/to/seed.sql.gz --schema=/path/to/schema.sql --studies=/path/to/studies-dir
 ```
 
+### [dump-data.sh](./scripts/dump-data.sh)
+Dump the data from cbioportal instance running at given url.
+
+#### Args:
+- _--url=localhost:8080_ (REQUIRED)
+- _--out=/output/path/to/database-dump.sql_ (REQUIRED)
+
+```shell
+sh ./scripts/dump-data.sh --url=localhost:8080 --out=/output/path/to/database-dump.sql
+```
+
 ### Util Scripts
 [utils](./utils) is a collection of scripts that are used in main scripts for improved modularity. See [documentation](./utils/README.md) for usage instructions.
+
+## Docker
+This repository also provides custom Dockerfiles. See [documentation](docker/README.md) for usage instructions.
 
 ## Troubleshoots
 If docker compose gets stuck at "_Database not available yet (first time can take a few minutes to load seed database)... Attempting reconnect..._", try pruning the docker system and rerun script:
