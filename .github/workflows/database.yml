@@ -31,7 +31,7 @@ jobs:
       - name: Update database dump
         run: |
           cd $GITHUB_WORKSPACE
-          sh scripts/docker-compose.sh --portal_type=web-and-data
+          sh scripts/docker-compose.sh --portal_type=web-and-data --docker_args='-d'
           sh utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=50
           sh scripts/import-data.sh --seed=./data/seed.sql.gz --schema=./data/cgds.sql --studies=./data/studies
           sh scripts/dump-data.sh --url=localhost:8080 --out=database_dump.sql
