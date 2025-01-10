@@ -4,7 +4,6 @@ on:
   push:
     paths:
       - 'data/**'
-  workflow_dispatch:
 
 jobs:
   update-database-image:
