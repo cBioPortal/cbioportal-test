@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "label": "security",
+  "message": "passing",
+  "color": "brightgreen",
+  "namedLogo": "docker"
+}
