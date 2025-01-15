@@ -1,5 +1,5 @@
 # cBioPortal Tests
-This repo hosts the test-runner scripts that are used throughout cbioportal applications. The tests themselves vary from repo to repo, and are contained within the source code (e.g. cbioportal-frontend hosts specs for the frontend).
+This repository hosts the test-runner scripts and data that is used throughout cbioportal applications. The tests themselves vary from repo to repo, and are contained within the source code (e.g. cbioportal-frontend hosts specs for the frontend).
 
 ## Setup
 Before running any of the scripts, make sure to export the required environment variables shown below. If you need access to default values, get in touch with [Zain](mailto:nasirz1@mskcc.org).
