@@ -2,8 +2,5 @@
   "schemaVersion": 1,
   "label": "security",
   "message": "passing",
-  "color": "brightgreen",
-  "metadata": {
-    "description": "This status badge corresponds to the security scans for cbioportal. Do not manually edit the values as they will be overwritten by the circleci tests."
-  }
+  "color": "brightgreen"
 }
