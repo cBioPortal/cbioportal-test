@@ -26,3 +26,9 @@ Importable script that can be added to the top of other scripts to parse command
 ...
 ```
 Command line arguments can then be accessed by their name. For example, if the argument is passed as `--arg=value`, it can be accessed in your script by referencing it: `echo "arg value: $arg"`.
+
+### [gen-keycloak-config.sh](./parse-args.sh)
+Script to add given list of studies to the given keycloak config template. This script is still experimental and intended for a specific localdb tests use case.
+```shell
+sh ./scripts/gen-keycloak-config.sh --studies='study_1 study_2 study_3' --template=/path/to/keycloak-config-template.json --out=/path/to/generated-keycloak-config.json
+```
