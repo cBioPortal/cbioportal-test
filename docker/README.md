@@ -7,4 +7,4 @@ This is a collection of Dockerfiles that build custom images that can be used to
 docker build -t cbioportal-database --build-arg DUMP_PATH=path/to/database_dump.sql -f /path/to/cbioportal-database.Dockerfile .
 ```
 ### Database dump
-A github action has been set up that runs everytime the [data](../data) directory changes. It creates a new database dump file, rebuilds cbioportal-database image, and pushes to [DockerHub](https://hub.docker.com/repository/docker/cbioportal/cbioportal-dev/tags?name=database).
+A github action has been set up that runs everytime the [data](../data) directory or the [dockerfile](./cbioportal-database.Dockerfile) changes. It creates a new database dump file, rebuilds cbioportal-database image, and pushes to [DockerHub](https://hub.docker.com/repository/docker/cbioportal/cbioportal-dev/tags?name=database).

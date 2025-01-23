@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'data/**'
+      - 'docker/cbioportal-database.Dockerfile'
 
 jobs:
   update-database-image:
