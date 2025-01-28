@@ -9,7 +9,11 @@ ENV MYSQL_DATABASE=cbioportal \
 
 # Copy database dump
 ARG DUMP_PATH
-COPY ${DUMP_PATH} /docker-entrypoint-initdb.d/
+COPY ${DUMP_PATH} /docker-entrypoint-initdb.d/database_dump.sql
+
+# Add list of included studies to image metadata
+ARG STUDY_NAMES
+LABEL studies="${STUDY_NAMES}"
 
 # Expose the connection port
 EXPOSE 3306
