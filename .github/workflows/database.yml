@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'cbioportal/cbioportal-test'
     env:
-      DOCKER_REPO: 'cbioportal/cbioportal-dev'
-      DOCKER_TAG: 'database'
+      DOCKER_REPO: 'cbioportal/mysql'
+      DOCKER_TAG: 'database-test'
       PLATFORMS: 'linux/amd64,linux/arm64'
     steps:
       - name: Checkout
@@ -34,8 +34,10 @@ jobs:
           sh scripts/docker-compose.sh --portal_type=web-and-data --docker_args='-d'
           sh utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=50
           sh scripts/import-data.sh --seed=$GITHUB_WORKSPACE/data/seed.sql.gz --schema=$GITHUB_WORKSPACE/data/cgds.sql --studies=$GITHUB_WORKSPACE/data/studies
+          curl -s localhost:8080/api/studies | jq -r '.[].studyId' | paste -sd, - > $GITHUB_WORKSPACE/studies.txt
           sh scripts/dump-data.sh --url=localhost:8080 --out=$GITHUB_WORKSPACE/database_dump.sql
       - name: Push new docker image
         run: |
           cd $GITHUB_WORKSPACE
-          docker buildx build --push --platform $PLATFORMS --tag $DOCKER_REPO:$DOCKER_TAG --build-arg DUMP_PATH=database_dump.sql --file docker/cbioportal-database.Dockerfile --cache-from type=gha --cache-to type=gha .
+          STUDY_NAMES=$(cat studies.txt)
+          docker buildx build --push --platform $PLATFORMS --tag $DOCKER_REPO:$DOCKER_TAG --build-arg DUMP_PATH=database_dump.sql --build-arg STUDY_NAMES=$STUDY_NAMES --file docker/cbioportal-database.Dockerfile --cache-from type=gha --cache-to type=gha .
