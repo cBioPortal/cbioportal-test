@@ -12,7 +12,7 @@ jobs:
     if: github.repository == 'cbioportal/cbioportal-test'
     env:
       DOCKER_REPO: 'cbioportal/mysql'
-      DOCKER_TAG: 'database-test'
+      DOCKER_TAG: '8.0-database-test'
       PLATFORMS: 'linux/amd64,linux/arm64'
     steps:
       - name: Checkout
