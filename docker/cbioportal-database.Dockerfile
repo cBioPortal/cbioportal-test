@@ -11,7 +11,7 @@ ENV MYSQL_DATABASE=cbioportal \
 ARG DUMP_PATH
 COPY ${DUMP_PATH} /docker-entrypoint-initdb.d/database_dump.sql
 
-# Add list of included studies to image metadata
+# Add list of included studies to image metadata. TODO: This should be automated to pull in study names from dump file instead of manually asking for ARGS.
 ARG STUDY_NAMES
 LABEL studies="${STUDY_NAMES}"
 
