@@ -11,9 +11,10 @@ Runs a periodic, finite loop to check if a server is live at the given url.
 - _--url=server-url:port_ (REQUIRED)
 - _--interval=5_ (OPTIONAL. Wait time between requests in seconds. Defaults to 5)
 - _--max_retries=20_ (OPTIONAL. Maximum number of requests to send. Defaults to 20)
+- _--insecure=false_ (OPTIONAL. Use a insecure connection request. Defaults to false)
 
 ```shell
-sh ./utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=20
+sh ./utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=20 --insecure=false
 ```
 
 ### [parse-args.sh](./parse-args.sh)
