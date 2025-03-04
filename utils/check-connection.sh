@@ -33,7 +33,7 @@ fi
 # Check connection
 i=0
 while [ $i -lt $MAX_RETRIES ]; do
-  if curl -s "$INSECURE" "$url" > /dev/null; then
+  if curl -s $INSECURE "$url" > /dev/null; then
     echo "Connection successfully established at $url!"
     exit 0
   fi
