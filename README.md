@@ -32,6 +32,15 @@ Build a docker image using the source code provided.
 - _--skip_web_and_data=false_ (If _true_, skip building the web-and-data image)
 
 ```shell
+# Export required env vars
+set -o allexport
+export DOCKER_USERNAME=<docker-username>
+export DOCKER_PASSWORD=<docker-password>
+export DOCKER_TAG=<build-tag>
+export GITHUB_USERNAME=<your-github-username>
+export GITHUB_TOKEN=<your-github-token>
+set +o allexport
+
 # To also push image to DockerHub, set --push=true. Default is false.
 sh ./scripts/build-push-image.sh --src=/path/to/dockerfile --push=false
 ```

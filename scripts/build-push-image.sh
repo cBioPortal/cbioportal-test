@@ -27,6 +27,9 @@ cd "$TEMP_DIR/cbioportal" || exit 1
 # Create application.properties
 cp "$APP_PROPERTIES_PATH.EXAMPLE" "$APP_PROPERTIES_PATH"
 
+# Create settings.xml github packages
+echo "<settings><servers><server><id>github</id><username>$GITHUB_USERNAME</username><password>$GITHUB_TOKEN</password></server></servers></settings>" > "$TEMP_DIR/cbioportal/settings.xml"
+
 # Login to DockerHub if push=true
 if [ "$push" ] && [ "$push" = "true" ]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
@@ -66,6 +69,7 @@ if [ ! "$skip_web_and_data" = "true" ]; then
     --platform "$PLATFORMS" \
     --tag "$DOCKER_REPO:$DOCKER_TAG" \
     --file "$DOCKERFILE_PATH_WEB_DATA" \
+    --build-arg SETTINGS_FILE_PATH="$TEMP_DIR/cbioportal/settings.xml" \
     --cache-from type=gha \
     --cache-to type=gha \
     .
@@ -79,6 +83,7 @@ if [ ! "$skip_web" = "true" ]; then
     --platform "$PLATFORMS" \
     --tag "$DOCKER_REPO:$DOCKER_TAG-web-shenandoah" \
     --file "$DOCKERFILE_PATH_WEB"  \
+    --build-arg SETTINGS_FILE_PATH="$TEMP_DIR/cbioportal/settings.xml" \
     --cache-from type=gha \
     --cache-to type=gha \
     .
