@@ -37,8 +37,6 @@ set -o allexport
 export DOCKER_USERNAME=<docker-username>
 export DOCKER_PASSWORD=<docker-password>
 export DOCKER_TAG=<build-tag>
-export GITHUB_USERNAME=<your-github-username>
-export GITHUB_TOKEN=<your-github-token>
 set +o allexport
 
 # To also push image to DockerHub, set --push=true. Default is false.
