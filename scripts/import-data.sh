@@ -7,12 +7,10 @@ DOCKER_COMPOSE_REPO="https://github.com/cbioportal/cbioportal-docker-compose.git
 . utils/parse-args.sh "$@"
 
 # Check required args
-if [ ! "$seed" ] || [ ! "$schema" ] || [ ! "$studies" ]; then
-  echo "Missing required args. Usage: ./scripts/import-data.sh --seed=/path/to/seed.sql.gz --schema=/path/to/schema.sql --studies=/path/to/studies-dir"
+if [ ! "$studies" ]; then
+  echo "Missing required args. Usage: ./scripts/import-data.sh --studies=/path/to/studies-dir"
   exit 1
 else
-  seed=$(eval echo "$seed")
-  schema=$(eval echo "$schema")
   studies=$(eval echo "$studies")
 fi
 
@@ -30,14 +28,6 @@ utils/check-connection.sh --url=localhost:8080
 # Clone docker compose repo
 git clone "$DOCKER_COMPOSE_REPO" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose"
-
-# Copy schema to database container
-SCHEMA_PATH=$(docker inspect cbioportal-database-container | jq -r '.[].Mounts[].Source' | grep 'cgds.sql')
-cp "$schema" "$SCHEMA_PATH"
-
-# Copy seed to database container
-SEED_PATH=$(docker inspect cbioportal-database-container | jq -r '.[].Mounts[].Source' | grep 'seed.sql.gz')
-cp "$seed" "$SEED_PATH"
 
 # Copy genesets to database container
 STUDY_PATH=$(docker inspect cbioportal-container | jq -r '.[].Mounts[].Source' | grep 'study')

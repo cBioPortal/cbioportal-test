@@ -5,6 +5,7 @@ on:
     paths:
       - 'data/**'
       - 'docker/cbioportal-database.Dockerfile'
+  workflow_dispatch:
 
 jobs:
   update-database-image:
@@ -33,7 +34,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           sh scripts/docker-compose.sh --portal_type=web-and-data --docker_args='-d'
           sh utils/check-connection.sh --url=localhost:8080 --interval=5 --max_retries=50
-          sh scripts/import-data.sh --seed=$GITHUB_WORKSPACE/data/seed.sql.gz --schema=$GITHUB_WORKSPACE/data/cgds.sql --studies=$GITHUB_WORKSPACE/data/studies
+          sh scripts/import-data.sh --studies=$GITHUB_WORKSPACE/data/studies
           curl -s localhost:8080/api/studies | jq -r '.[].studyId' | paste -sd, - > $GITHUB_WORKSPACE/studies.txt
           sh scripts/dump-data.sh --url=localhost:8080 --out=$GITHUB_WORKSPACE/database_dump.sql
       - name: Push new docker image
