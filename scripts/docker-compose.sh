@@ -11,6 +11,11 @@ TEMP_DIR=$(mktemp -d)
 git clone "$REPO_URL" "$TEMP_DIR/cbioportal-docker-compose"
 cd "$TEMP_DIR/cbioportal-docker-compose" || exit 1
 
+# Use a custom docker compose ref if provided
+if [ "$DOCKER_COMPOSE_REF" ]; then
+  git checkout "$DOCKER_COMPOSE_REF" || exit 1
+fi
+
 # Save environment variables that start with DOCKER or DB
 echo "" >> .env
 set | grep -e "^DOCKER" -e "^DB" -e "^APP" >> .env

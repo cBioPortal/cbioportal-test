@@ -15,6 +15,7 @@ export DB_MYSQL_URL=<mysql-url>
 export DB_CLICKHOUSE_USERNAME=<clickhouse-username>
 export DB_CLICKHOUSE_PASSWORD=<clickhouse-password>
 export DB_CLICKHOUSE_URL=<clickhouse-url>
+export DOCKER_COMPOSE_REF=<docker-compose-repo-ref> # By default, uses master branch
 set +o allexport
 ```
 
