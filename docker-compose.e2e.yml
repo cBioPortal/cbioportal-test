@@ -1,0 +1,104 @@
+# cBioPortal Modular E2E Test Setup
+#
+# 4 swappable images:
+#   FRONTEND_IMAGE  - Static web server with React app
+#   BACKEND_IMAGE   - API backend (Go or Java)
+#   DB_IMAGE        - ClickHouse with test data
+#   RUNNER_IMAGE    - Chrome + WebDriverIO + test specs
+#
+# Usage:
+#   # Default (Java backend + ClickHouse)
+#   docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#
+#   # Test Go API backend
+#   BACKEND_IMAGE=inodb/cbioportal-api:latest docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#
+#   # Test a frontend PR
+#   FRONTEND_IMAGE=cbioportal/frontend:pr-1234 docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#
+#   # Run only specific tests
+#   SPEC_PATTERN="./local/specs/core/patientview.spec.js" docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#
+# Results are in ./e2e-results/ (mounted volume)
+
+services:
+  # ClickHouse with pre-loaded test data
+  database:
+    image: ${DB_IMAGE:-ghcr.io/cbioportal/clickhouse-test:latest}
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - e2e
+
+  # API backend
+  backend:
+    image: ${BACKEND_IMAGE:-cbioportal/cbioportal:6.4.1}
+    environment:
+      # Go API config
+      CLICKHOUSE_DSN: "clickhouse://cbio_user:somepassword@database:9000/cbioportal"
+      PORT: "8080"
+      AUTH_DISABLED: "true"
+      # Java backend config (ignored by Go API)
+      SHOW_DEBUG_INFO: "true"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 30s
+    networks:
+      - e2e
+
+  # Frontend static server
+  frontend:
+    image: ${FRONTEND_IMAGE:-cbioportal/frontend:latest}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - e2e
+
+  # Reverse proxy - routes /api/* to backend, /* to frontend
+  proxy:
+    image: joseluisq/static-web-server:2-alpine
+    # Use nginx for proxying since SWS doesn't support reverse proxy
+    # Actually, let's use caddy for simplicity
+    image: caddy:2-alpine
+    volumes:
+      - ./docker/e2e/Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "${E2E_PORT:-80}:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - e2e
+
+  # E2E test runner
+  test-runner:
+    image: ${RUNNER_IMAGE:-cbioportal/e2e-runner:latest}
+    environment:
+      CBIOPORTAL_URL: "http://proxy:80"
+      FRONTEND_TEST_DO_NOT_LOAD_EXTERNAL_FRONTEND: "true"
+      FRONTEND_TEST_USE_LOCAL_DIST: "true"
+      HEADLESS_CHROME: "true"
+      SKIP_KEYCLOAK: "${SKIP_KEYCLOAK:-true}"
+      SPEC_FILE_PATTERN: "${SPEC_PATTERN:-./local/specs/**/*.spec.js}"
+      SCREENSHOT_DIRECTORY: "./local/screenshots"
+      JUNIT_REPORT_PATH: "/results/junit/"
+    volumes:
+      - ./e2e-results:/results
+    depends_on:
+      proxy:
+        condition: service_started
+    networks:
+      - e2e
+
+networks:
+  e2e:
