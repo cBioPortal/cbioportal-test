@@ -15,7 +15,7 @@ Pre-built ClickHouse image with cBioPortal test data, mirroring `cbioportal/mysq
 # docker-compose.yml
 services:
   clickhouse:
-    image: ghcr.io/cbioportal/clickhouse-test:latest
+    image: cbioportal/clickhouse-test:latest
     ports:
       - "8123:8123"
       - "9000:9000"
@@ -23,7 +23,7 @@ services:
 
 ```bash
 # Or directly
-docker run -d -p 8123:8123 -p 9000:9000 ghcr.io/cbioportal/clickhouse-test:latest
+docker run -d -p 8123:8123 -p 9000:9000 cbioportal/clickhouse-test:latest
 ```
 
 Connect with: `clickhouse://cbio_user:somepassword@localhost:9000/cbioportal`

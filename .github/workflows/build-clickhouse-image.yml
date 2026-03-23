@@ -9,29 +9,24 @@ on:
       - 'data/**'
 
 env:
-  REGISTRY: ghcr.io
   IMAGE_NAME: cbioportal/clickhouse-test
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Login to GHCR
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build ClickHouse test data image
         run: |
           chmod +x docker/clickhouse/build.sh
-          docker/clickhouse/build.sh ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          docker/clickhouse/build.sh ${{ env.IMAGE_NAME }}:latest
 
       - name: Push image
-        run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: docker push ${{ env.IMAGE_NAME }}:latest

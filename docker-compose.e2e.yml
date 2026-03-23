@@ -24,7 +24,7 @@
 services:
   # ClickHouse with pre-loaded test data
   database:
-    image: ${DB_IMAGE:-ghcr.io/cbioportal/clickhouse-test:latest}
+    image: ${DB_IMAGE:-cbioportal/clickhouse-test:latest}
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
       interval: 5s

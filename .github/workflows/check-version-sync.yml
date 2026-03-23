@@ -1,0 +1,33 @@
+name: Check version sync
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check backend image version sync
+        run: |
+          # Get version from cbioportal-docker-compose
+          UPSTREAM=$(curl -sf https://raw.githubusercontent.com/cBioPortal/cbioportal-docker-compose/master/.env \
+            | grep '^DOCKER_IMAGE_CBIOPORTAL=' | cut -d= -f2)
+
+          # Get default from our e2e compose
+          LOCAL=$(grep -oP 'BACKEND_IMAGE:-\K[^}]+' docker-compose.e2e.yml)
+
+          echo "Upstream: $UPSTREAM"
+          echo "Local:    $LOCAL"
+
+          if [ "$UPSTREAM" != "$LOCAL" ]; then
+            echo "::warning::Backend image version mismatch: upstream=$UPSTREAM local=$LOCAL"
+            echo "Update BACKEND_IMAGE default in docker-compose.e2e.yml to match cbioportal-docker-compose/.env"
+            exit 1
+          fi
+          echo "Versions in sync ✓"
