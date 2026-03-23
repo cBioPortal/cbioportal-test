@@ -8,16 +8,16 @@
 #
 # Usage:
 #   # Default (Java backend + ClickHouse)
-#   docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#   docker compose -f docker-compose.e2e.yml run test-runner
 #
 #   # Test Go API backend
-#   BACKEND_IMAGE=inodb/cbioportal-api:latest docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#   BACKEND_IMAGE=inodb/cbioportal-api:latest docker compose -f docker-compose.e2e.yml run test-runner
 #
 #   # Test a frontend PR
-#   FRONTEND_IMAGE=cbioportal/frontend:pr-1234 docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#   FRONTEND_IMAGE=cbioportal/frontend:pr-1234 docker compose -f docker-compose.e2e.yml run test-runner
 #
 #   # Run only specific tests
-#   SPEC_PATTERN="./local/specs/core/patientview.spec.js" docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+#   SPEC_PATTERN="./local/specs/core/patientview.spec.js" docker compose -f docker-compose.e2e.yml run test-runner
 #
 # Results are in ./e2e-results/ (mounted volume)
 
@@ -66,12 +66,10 @@ services:
 
   # Reverse proxy - routes /api/* to backend, /* to frontend
   proxy:
-    image: joseluisq/static-web-server:2-alpine
-    # Use nginx for proxying since SWS doesn't support reverse proxy
-    # Actually, let's use caddy for simplicity
     image: caddy:2-alpine
-    volumes:
-      - ./docker/e2e/Caddyfile:/etc/caddy/Caddyfile:ro
+    configs:
+      - source: caddyfile
+        target: /etc/caddy/Caddyfile
     ports:
       - "${E2E_PORT:-80}:80"
     depends_on:
@@ -102,3 +100,14 @@ services:
 
 networks:
   e2e:
+
+configs:
+  caddyfile:
+    content: |
+      :80 {
+        handle /api/* { reverse_proxy backend:8080 }
+        handle /config_service { reverse_proxy backend:8080 }
+        handle /health { reverse_proxy backend:8080 }
+        handle /swagger/* { reverse_proxy backend:8080 }
+        handle { reverse_proxy frontend:80 }
+      }

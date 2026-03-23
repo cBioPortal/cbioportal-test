@@ -25,8 +25,9 @@ Self-contained end-to-end testing for cBioPortal with swappable components.
 ## Quick Start
 
 ```bash
-# Run all tests with defaults
-docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+# Download the compose file and run all tests
+curl -O https://raw.githubusercontent.com/cBioPortal/cbioportal-test/main/docker-compose.e2e.yml
+docker compose -f docker-compose.e2e.yml run test-runner
 
 # Results in ./e2e-results/
 ```
@@ -36,19 +37,19 @@ docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
 ```bash
 # Test Go API backend
 BACKEND_IMAGE=inodb/cbioportal-api:latest \
-  docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+  docker compose -f docker-compose.e2e.yml run test-runner
 
 # Test a frontend PR
 FRONTEND_IMAGE=cbioportal/frontend:pr-1234 \
-  docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+  docker compose -f docker-compose.e2e.yml run test-runner
 
 # Test with different data
 DB_IMAGE=cbioportal/clickhouse:genie-data \
-  docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+  docker compose -f docker-compose.e2e.yml run test-runner
 
 # Run only specific tests
 SPEC_PATTERN="./local/specs/core/patientview.spec.js" \
-  docker compose -f docker-compose.e2e.yml up --abort-on-container-exit
+  docker compose -f docker-compose.e2e.yml run test-runner
 
 # Run remote tests against production
 SPEC_PATTERN="./remote/specs/**/*.spec.js" \
