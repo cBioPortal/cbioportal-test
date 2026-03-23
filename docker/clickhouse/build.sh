@@ -6,11 +6,11 @@
 # importer to create all derived tables, then commits the result.
 #
 # Usage: ./build.sh [tag]
-# Default tag: cbioportal/clickhouse:test-data
+# Default tag: cbioportal/clickhouse-test:latest
 
 set -euo pipefail
 
-TAG="${1:-cbioportal/clickhouse:test-data}"
+TAG="${1:-cbioportal/clickhouse-test:latest}"
 NETWORK="ch-build-$$"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -20,6 +20,8 @@ cleanup() {
   echo "Cleaning up..."
   docker rm -f ch-build-mysql ch-build-clickhouse 2>/dev/null || true
   docker network rm "$NETWORK" 2>/dev/null || true
+  [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && rm -rf "$TMPDIR" || true
+  [ -n "${COMPOSE_DIR:-}" ] && [ -d "$COMPOSE_DIR" ] && rm -rf "$COMPOSE_DIR" || true
 }
 trap cleanup EXIT
 
@@ -46,23 +48,35 @@ docker run -d --name ch-build-clickhouse --network "$NETWORK" \
 
 # Wait for MySQL
 echo "Waiting for MySQL to be ready..."
+MYSQL_READY=0
 for i in $(seq 1 90); do
   if docker exec ch-build-mysql mysql -ucbio_user -psomepassword cbioportal -e "SELECT 1" >/dev/null 2>&1; then
-    echo "  MySQL ready after ${i}s"
+    echo "  MySQL ready after $((i * 2))s"
+    MYSQL_READY=1
     break
   fi
   sleep 2
 done
+if [ "$MYSQL_READY" -ne 1 ]; then
+  echo "MySQL did not become ready within $((90 * 2))s" >&2
+  exit 1
+fi
 
 # Wait for ClickHouse
 echo "Waiting for ClickHouse to be ready..."
+CLICKHOUSE_READY=0
 for i in $(seq 1 30); do
   if docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword -q "SELECT 1" >/dev/null 2>&1; then
-    echo "  ClickHouse ready after ${i}s"
+    echo "  ClickHouse ready after $((i * 2))s"
+    CLICKHOUSE_READY=1
     break
   fi
   sleep 2
 done
+if [ "$CLICKHOUSE_READY" -ne 1 ]; then
+  echo "ClickHouse did not become ready within $((30 * 2))s" >&2
+  exit 1
+fi
 
 # Extract ClickHouse SQL schema from cBioPortal image
 echo "Extracting ClickHouse schema..."
@@ -73,7 +87,14 @@ docker run --rm -v "$TMPDIR:/sql" cbioportal/cbioportal:6.4.1 \
 # Clone cbioportal-docker-compose for the Sling init scripts
 echo "Getting Sling init scripts..."
 COMPOSE_DIR=$(mktemp -d)
-git clone --depth 1 https://github.com/cBioPortal/cbioportal-docker-compose.git "$COMPOSE_DIR" 2>/dev/null
+if ! git clone --depth 1 https://github.com/cBioPortal/cbioportal-docker-compose.git "$COMPOSE_DIR"; then
+  echo "Error: Failed to clone cbioportal-docker-compose" >&2
+  exit 1
+fi
+if [ ! -f "$COMPOSE_DIR/addon/clickhouse/init.sh" ] || [ ! -f "$COMPOSE_DIR/addon/clickhouse/sync-databases.sh" ]; then
+  echo "Error: Expected Sling init scripts not found in cloned repository" >&2
+  exit 1
+fi
 
 # Run Sling importer
 echo "Running Sling importer (this takes ~2 minutes)..."
@@ -101,13 +122,17 @@ docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password so
 docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
   -d cbioportal -q "SELECT 'clinical', count() FROM clinical_data_derived FORMAT TabSeparated"
 
-# Commit
+# Stop ClickHouse before committing for a clean state
 echo ""
+echo "Stopping ClickHouse before commit..."
+docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
+  -q "SYSTEM FLUSH LOGS" 2>/dev/null || true
+docker stop ch-build-clickhouse
+
 echo "Committing image as $TAG..."
 docker commit ch-build-clickhouse "$TAG"
 
-# Cleanup temp dirs
-rm -rf "$TMPDIR" "$COMPOSE_DIR"
+# Cleanup temp dirs (also handled by trap, but clean up eagerly on success)
 
 echo ""
 echo "=== Done! ==="

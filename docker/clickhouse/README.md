@@ -32,7 +32,7 @@ Connect with: `clickhouse://cbio_user:somepassword@localhost:9000/cbioportal`
 
 ```bash
 ./build.sh [tag]
-# Default: cbioportal/clickhouse:test-data
+# Default: cbioportal/clickhouse-test:latest
 ```
 
 The build script:

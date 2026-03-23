@@ -64,7 +64,7 @@ CBIOPORTAL_URL=https://www.cbioportal.org \
 | `cbioportal/frontend:latest` | cbioportal-frontend | Static web server + built React app |
 | `cbioportal/cbioportal:latest` | cbioportal | Java backend (default) |
 | `inodb/cbioportal-api:latest` | cbioportal-api | Go backend (alternative) |
-| `cbioportal/clickhouse:test-data` | cbioportal-test | ClickHouse with 5 test studies |
+| `cbioportal/clickhouse-test:latest` | cbioportal-test | ClickHouse with 5 test studies |
 | `cbioportal/e2e-runner:latest` | cbioportal-frontend | Chrome + WebDriverIO + test specs |
 
 ## Environment Variables
@@ -73,7 +73,7 @@ CBIOPORTAL_URL=https://www.cbioportal.org \
 |---|---|---|
 | `BACKEND_IMAGE` | `cbioportal/cbioportal:6.4.1` | Backend Docker image |
 | `FRONTEND_IMAGE` | `cbioportal/frontend:latest` | Frontend Docker image |
-| `DB_IMAGE` | `cbioportal/clickhouse:test-data` | Database Docker image |
+| `DB_IMAGE` | `cbioportal/clickhouse-test:latest` | Database Docker image |
 | `RUNNER_IMAGE` | `cbioportal/e2e-runner:latest` | Test runner Docker image |
 | `SPEC_PATTERN` | `./local/specs/**/*.spec.js` | Which test specs to run |
 | `SKIP_KEYCLOAK` | `true` | Skip Keycloak login flow |

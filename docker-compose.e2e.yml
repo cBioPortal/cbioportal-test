@@ -26,7 +26,7 @@ services:
   database:
     image: ${DB_IMAGE:-cbioportal/clickhouse-test:latest}
     healthcheck:
-      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      test: ["CMD", "clickhouse-client", "--user", "cbio_user", "--password", "somepassword", "--database", "cbioportal", "--query", "SELECT 1"]
       interval: 5s
       timeout: 3s
       retries: 10
