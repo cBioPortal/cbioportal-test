@@ -2,7 +2,7 @@
 #
 # 4 swappable images:
 #   FRONTEND_IMAGE  - Static web server with React app
-#   BACKEND_IMAGE   - API backend (Go or Java)
+#   BACKEND_IMAGE   - API backend
 #   DB_IMAGE        - ClickHouse with test data
 #   RUNNER_IMAGE    - Chrome + WebDriverIO + test specs
 #
@@ -10,8 +10,6 @@
 #   # Default (Java backend + ClickHouse)
 #   docker compose -f docker-compose.e2e.yml run test-runner
 #
-#   # Test Go API backend
-#   BACKEND_IMAGE=inodb/cbioportal-api:latest docker compose -f docker-compose.e2e.yml run test-runner
 #
 #   # Test a frontend PR
 #   FRONTEND_IMAGE=cbioportal/frontend:pr-1234 docker compose -f docker-compose.e2e.yml run test-runner
@@ -37,11 +35,8 @@ services:
   backend:
     image: ${BACKEND_IMAGE:-cbioportal/cbioportal:6.4.1}
     environment:
-      # Go API config
       CLICKHOUSE_DSN: "clickhouse://cbio_user:somepassword@database:9000/cbioportal"
       PORT: "8080"
-      AUTH_DISABLED: "true"
-      # Java backend config (ignored by Go API)
       SHOW_DEBUG_INFO: "true"
     depends_on:
       database:

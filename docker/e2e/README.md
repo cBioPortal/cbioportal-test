@@ -7,7 +7,7 @@ Self-contained end-to-end testing for cBioPortal with swappable components.
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  FRONTEND   │     │   BACKEND   │     │  DATABASE   │
-│  (SWS/nginx)│◄───►│  (Go/Java)  │◄───►│ (ClickHouse)│
+│  (SWS/nginx)│◄───►│   (Java)    │◄───►│ (ClickHouse)│
 │   :80       │     │   :8080     │     │   :9000     │
 └──────┬──────┘     └─────────────┘     └─────────────┘
        │
@@ -35,10 +35,6 @@ docker compose -f docker-compose.e2e.yml run test-runner
 ## Swap Components
 
 ```bash
-# Test Go API backend
-BACKEND_IMAGE=inodb/cbioportal-api:latest \
-  docker compose -f docker-compose.e2e.yml run test-runner
-
 # Test a frontend PR
 FRONTEND_IMAGE=cbioportal/frontend:pr-1234 \
   docker compose -f docker-compose.e2e.yml run test-runner
@@ -63,7 +59,6 @@ CBIOPORTAL_URL=https://www.cbioportal.org \
 |---|---|---|
 | `cbioportal/frontend:latest` | cbioportal-frontend | Static web server + built React app |
 | `cbioportal/cbioportal:latest` | cbioportal | Java backend (default) |
-| `inodb/cbioportal-api:latest` | cbioportal-api | Go backend (alternative) |
 | `cbioportal/clickhouse-test:latest` | cbioportal-test | ClickHouse with 5 test studies |
 | `cbioportal/e2e-runner:latest` | cbioportal-frontend | Chrome + WebDriverIO + test specs |
 
