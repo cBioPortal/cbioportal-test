@@ -1,13 +1,18 @@
 # ClickHouse Test Data Image
 
-Pre-built ClickHouse image with cBioPortal test data, mirroring `cbioportal/mysql:8.0-database-test` for the ClickHouse column store.
+Pre-built ClickHouse image with the cBioPortal database schema and reference seed data. Used for e2e testing against the ClickHouse-only cBioPortal stack.
+
+This uses the simplified ClickHouse-only approach from [cbioportal-docker-compose#72](https://github.com/cBioPortal/cbioportal-docker-compose/pull/72) — no MySQL, no Sling importer. The schema and seed SQL are loaded directly into ClickHouse via `docker-entrypoint-initdb.d` on first start.
 
 ## What's included
 
-- All 5 CI test studies: `ascn_test_study`, `study_es_0`, `study_hg38`, `teststudy_genepanels`, `lgg_ucsf_2014_test_generic_assay`
-- All derived tables created by the Sling importer: `sample_derived`, `clinical_data_derived`, `genomic_event_derived`, `genetic_alteration_derived`, `clinical_event_derived`, `gene_panel_to_gene_derived`, `sample_to_gene_panel_derived`, `generic_assay_data_derived`
-- Gene panels: `TESTPANEL1` (17 genes), `TESTPANEL2` (11 genes), `WES` (all genes)
-- Full gene table (42K+ genes), cancer types, reference genomes
+- **50 tables** — full ClickHouse schema from `cbioportal/cbioportal@add-clickhoue-database-schema-and-seed`
+- **~44K genes** (`gene`, `gene_alias`)
+- **~850 cancer types** (`type_of_cancer`)
+- **3 reference genomes** (`reference_genome`)
+- **~35K genesets** (`geneset`, `geneset_gene`, etc.)
+
+**Not included:** test studies. For now, API endpoints for studies/samples/mutations return empty results. Test study data can be imported separately.
 
 ## Usage
 
@@ -35,12 +40,8 @@ Connect with: `clickhouse://cbio_user:somepassword@localhost:9000/cbioportal`
 # Default: cbioportal/clickhouse-test:latest
 ```
 
-The build script:
-1. Starts `cbioportal/mysql:8.0-database-test` (pre-loaded MySQL)
-2. Starts fresh `clickhouse/clickhouse-server:24.10`
-3. Runs the Sling importer to sync MySQL → ClickHouse
-4. Commits the ClickHouse container as a new image
+The build script downloads the latest `schema.sql` and `seed.sql.gz` from the cbioportal repo (if older than 1 day) and runs `docker build` to produce the image.
 
 ## CI
 
-The GitHub Action at `.github/workflows/build-clickhouse-image.yml` automatically rebuilds and pushes the image when the build script or test data changes.
+The GitHub Action at `.github/workflows/build-clickhouse-image.yml` automatically rebuilds and pushes the image when the build files or Dockerfile change.

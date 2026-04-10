@@ -100,9 +100,19 @@ configs:
   caddyfile:
     content: |
       :80 {
-        handle /api/* { reverse_proxy backend:8080 }
-        handle /config_service { reverse_proxy backend:8080 }
-        handle /health { reverse_proxy backend:8080 }
-        handle /swagger/* { reverse_proxy backend:8080 }
-        handle { reverse_proxy frontend:80 }
+        handle /api/* {
+          reverse_proxy backend:8080
+        }
+        handle /config_service {
+          reverse_proxy backend:8080
+        }
+        handle /health {
+          reverse_proxy backend:8080
+        }
+        handle /swagger/* {
+          reverse_proxy backend:8080
+        }
+        handle {
+          reverse_proxy frontend:80
+        }
       }

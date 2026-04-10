@@ -1,9 +1,14 @@
 #!/bin/bash
-# Build a ClickHouse Docker image pre-loaded with cBioPortal test data.
+# Build the cBioPortal ClickHouse test data image.
 #
-# This mirrors the cbioportal/mysql:8.0-database-test image but for ClickHouse.
-# It starts MySQL (with pre-loaded test data), ClickHouse, runs the Sling
-# importer to create all derived tables, then commits the result.
+# This uses the simplified ClickHouse-only approach from
+# cbioportal-docker-compose#72 — no MySQL, no Sling importer.
+# The image loads the base schema and seed data (genes, cancer types,
+# reference genomes, genesets) via docker-entrypoint-initdb.d on first start.
+#
+# NOTE: This image contains reference data only. It does NOT contain test
+# studies. The Go API is functional against this image (studies, samples,
+# mutations endpoints return empty arrays — not errors).
 #
 # Usage: ./build.sh [tag]
 # Default tag: cbioportal/clickhouse-test:latest
@@ -11,128 +16,28 @@
 set -euo pipefail
 
 TAG="${1:-cbioportal/clickhouse-test:latest}"
-NETWORK="ch-build-$$"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+SCHEMA_URL="https://raw.githubusercontent.com/cBioPortal/cbioportal/refs/heads/add-clickhoue-database-schema-and-seed/src/main/resources/db-scripts/clickhouse/init/schema.sql"
+SEED_URL="https://github.com/cBioPortal/cbioportal/raw/refs/heads/add-clickhoue-database-schema-and-seed/src/main/resources/db-scripts/clickhouse/init/seed-cbioportal_hg19_hg38_v2.14.5.sql.gz"
 
 echo "=== Building ClickHouse test data image: $TAG ==="
 
-cleanup() {
-  echo "Cleaning up..."
-  docker rm -f ch-build-mysql ch-build-clickhouse 2>/dev/null || true
-  docker network rm "$NETWORK" 2>/dev/null || true
-  [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && rm -rf "$TMPDIR" || true
-  [ -n "${COMPOSE_DIR:-}" ] && [ -d "$COMPOSE_DIR" ] && rm -rf "$COMPOSE_DIR" || true
+# Download the latest schema + seed if missing or stale (>1 day old)
+refresh_file() {
+  local file="$1"
+  local url="$2"
+  if [ ! -f "$file" ] || [ -n "$(find "$file" -mtime +1 2>/dev/null)" ]; then
+    echo "Downloading $(basename "$file")..."
+    curl -sfL -o "$file" "$url"
+  fi
 }
-trap cleanup EXIT
 
-# Create isolated network
-docker network create "$NETWORK"
+refresh_file "$SCRIPT_DIR/schema.sql" "$SCHEMA_URL"
+refresh_file "$SCRIPT_DIR/seed.sql.gz" "$SEED_URL"
 
-# Start MySQL with pre-loaded test data
-echo "Starting MySQL (cbioportal/mysql:8.0-database-test)..."
-docker run -d --name ch-build-mysql --network "$NETWORK" \
-  -e MYSQL_ROOT_PASSWORD=root \
-  -e MYSQL_DATABASE=cbioportal \
-  -e MYSQL_USER=cbio_user \
-  -e MYSQL_PASSWORD=somepassword \
-  cbioportal/mysql:8.0-database-test \
-  --local-infile=1
-
-# Start fresh ClickHouse
-echo "Starting ClickHouse (clickhouse/clickhouse-server:24.10)..."
-docker run -d --name ch-build-clickhouse --network "$NETWORK" \
-  -e CLICKHOUSE_DB=cbioportal \
-  -e CLICKHOUSE_USER=cbio_user \
-  -e CLICKHOUSE_PASSWORD=somepassword \
-  clickhouse/clickhouse-server:24.10
-
-# Wait for MySQL
-echo "Waiting for MySQL to be ready..."
-MYSQL_READY=0
-for i in $(seq 1 90); do
-  if docker exec ch-build-mysql mysql -ucbio_user -psomepassword cbioportal -e "SELECT 1" >/dev/null 2>&1; then
-    echo "  MySQL ready after $((i * 2))s"
-    MYSQL_READY=1
-    break
-  fi
-  sleep 2
-done
-if [ "$MYSQL_READY" -ne 1 ]; then
-  echo "MySQL did not become ready within $((90 * 2))s" >&2
-  exit 1
-fi
-
-# Wait for ClickHouse
-echo "Waiting for ClickHouse to be ready..."
-CLICKHOUSE_READY=0
-for i in $(seq 1 30); do
-  if docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword -q "SELECT 1" >/dev/null 2>&1; then
-    echo "  ClickHouse ready after $((i * 2))s"
-    CLICKHOUSE_READY=1
-    break
-  fi
-  sleep 2
-done
-if [ "$CLICKHOUSE_READY" -ne 1 ]; then
-  echo "ClickHouse did not become ready within $((30 * 2))s" >&2
-  exit 1
-fi
-
-# Extract ClickHouse SQL schema from cBioPortal image
-echo "Extracting ClickHouse schema..."
-TMPDIR=$(mktemp -d)
-docker run --rm -v "$TMPDIR:/sql" cbioportal/cbioportal:6.4.1 \
-  sh -c "cp /cbioportal/db-scripts/clickhouse/*.sql /sql/ 2>/dev/null"
-
-# Clone cbioportal-docker-compose for the Sling init scripts
-echo "Getting Sling init scripts..."
-COMPOSE_DIR=$(mktemp -d)
-if ! git clone --depth 1 https://github.com/cBioPortal/cbioportal-docker-compose.git "$COMPOSE_DIR"; then
-  echo "Error: Failed to clone cbioportal-docker-compose" >&2
-  exit 1
-fi
-if [ ! -f "$COMPOSE_DIR/addon/clickhouse/init.sh" ] || [ ! -f "$COMPOSE_DIR/addon/clickhouse/sync-databases.sh" ]; then
-  echo "Error: Expected Sling init scripts not found in cloned repository" >&2
-  exit 1
-fi
-
-# Run Sling importer
-echo "Running Sling importer (this takes ~2 minutes)..."
-docker run --rm --network "$NETWORK" \
-  -e MYSQL_DB=cbioportal -e MYSQL_USER=cbio_user -e MYSQL_PASSWORD=somepassword \
-  -e MYSQL_HOST=ch-build-mysql -e MYSQL_PORT=3306 \
-  -e "MYSQL_SERVER_ADDITIONAL_ARGS=?useSSL=false&allowPublicKeyRetrieval=true" \
-  -e CLICKHOUSE_DB=cbioportal -e CLICKHOUSE_USER=cbio_user -e CLICKHOUSE_PASSWORD=somepassword \
-  -e CLICKHOUSE_HOST=ch-build-clickhouse -e CLICKHOUSE_PORT=9000 \
-  -e CLICKHOUSE_MAX_MEM=1000000000 -e APP_CBIOPORTAL_CORE_BRANCH=main \
-  -v "$COMPOSE_DIR/addon/clickhouse/init.sh:/workdir/init.sh" \
-  -v "$COMPOSE_DIR/addon/clickhouse/sync-databases.sh:/workdir/sync-databases.sh" \
-  -v "$TMPDIR:/workdir/sql" \
-  cbioportal/clickhouse-importer:latest bash /workdir/init.sh
-
-# Verify
-echo ""
-echo "=== Verification ==="
-docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
-  -d cbioportal -q "SELECT 'studies', count() FROM cancer_study FORMAT TabSeparated"
-docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
-  -d cbioportal -q "SELECT 'samples', count() FROM sample_derived FORMAT TabSeparated"
-docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
-  -d cbioportal -q "SELECT 'mutations', count() FROM genomic_event_derived FORMAT TabSeparated"
-docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
-  -d cbioportal -q "SELECT 'clinical', count() FROM clinical_data_derived FORMAT TabSeparated"
-
-# Stop ClickHouse before committing for a clean state
-echo ""
-echo "Stopping ClickHouse before commit..."
-docker exec ch-build-clickhouse clickhouse-client --user cbio_user --password somepassword \
-  -q "SYSTEM FLUSH LOGS" 2>/dev/null || true
-docker stop ch-build-clickhouse
-
-echo "Committing image as $TAG..."
-docker commit ch-build-clickhouse "$TAG"
-
-# Cleanup temp dirs (also handled by trap, but clean up eagerly on success)
+echo "Building image..."
+docker build -t "$TAG" "$SCRIPT_DIR"
 
 echo ""
 echo "=== Done! ==="
