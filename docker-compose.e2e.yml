@@ -23,11 +23,14 @@ services:
   # ClickHouse with pre-loaded test data
   database:
     image: ${DB_IMAGE:-cbioportal/clickhouse-test:latest}
+    # Healthcheck asserts that the seed data has been loaded (gene table
+    # populated). Raw SELECT 1 returns OK before init scripts finish.
     healthcheck:
-      test: ["CMD", "clickhouse-client", "--user", "cbio_user", "--password", "somepassword", "--database", "cbioportal", "--query", "SELECT 1"]
+      test: ["CMD-SHELL", "clickhouse-client --user cbio_user --password somepassword --database cbioportal --query 'SELECT count() > 0 FROM gene' 2>/dev/null | grep -q '^1$$'"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 60
+      start_period: 30s
     networks:
       - e2e
 
