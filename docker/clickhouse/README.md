@@ -12,7 +12,12 @@ This uses the simplified ClickHouse-only approach from [cbioportal-docker-compos
 - **3 reference genomes** (`reference_genome`)
 - **~35K genesets** (`geneset`, `geneset_gene`, etc.)
 
-**Not included:** test studies. For now, API endpoints for studies/samples/mutations return empty results. Test study data can be imported separately.
+**Test studies included:** the build script imports the 5 CI test studies from `cbioportal/mysql:8.0-database-test` via Sling, so the final image has:
+- 5 cancer studies
+- 918 samples
+- ~10,560 mutations
+- ~7,767 clinical data records
+- All derived tables (`sample_derived`, `clinical_data_derived`, `genomic_event_derived`, etc.)
 
 ## Usage
 
@@ -40,7 +45,14 @@ Connect with: `clickhouse://cbio_user:somepassword@localhost:9000/cbioportal`
 # Default: cbioportal/clickhouse-test:latest
 ```
 
-The build script downloads the latest `schema.sql` and `seed.sql.gz` from the cbioportal repo (if older than 1 day) and runs `docker build` to produce the image.
+The build script:
+1. Downloads the latest `schema.sql` and `seed.sql.gz` from `cBioPortal/cbioportal@add-clickhoue-database-schema-and-seed`
+2. Builds a base image with the schema + seed loaded via `docker-entrypoint-initdb.d`
+3. Starts that ClickHouse container alongside `cbioportal/mysql:8.0-database-test`
+4. Runs the Sling importer to copy test study data MySQL → ClickHouse
+5. Snapshots the populated ClickHouse data and bakes it into the final image (works around the `VOLUME /var/lib/clickhouse` declaration that prevents `docker commit` from capturing data)
+
+Build time: ~5 minutes (most of which is waiting for MySQL TCP).
 
 ## CI
 
