@@ -56,6 +56,14 @@ services:
   # Frontend static server
   frontend:
     image: ${FRONTEND_IMAGE:-cbioportal/frontend:latest}
+    environment:
+      # The frontend's column-store proxy reads apiRoot from window.frontendConfig
+      # and uses it as the host for /api/column-store/* requests. Without a proper
+      # host, it computes "//api/column-store/..." (treats "api" as a hostname).
+      # In the docker compose network, the proxy service serves both the API and
+      # the frontend, so the browser must use http://proxy as the API root.
+      API_ROOT: "${API_ROOT:-http://proxy/}"
+      BASE_URL: "${BASE_URL:-http://proxy/}"
     depends_on:
       backend:
         condition: service_healthy
