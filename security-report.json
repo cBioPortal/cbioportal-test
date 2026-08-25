@@ -1,0 +1,66 @@
+[
+  {
+    "severity": "CRITICAL",
+    "source_id": "CVE-2026-39821",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-39821?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "The ToASCII and ToUnicode functions incorrectly accept Punycode-encoded labels that decode to an ASCII-only label. For example, ToUnicode(\"xn--example-.com\") incorrectly returns the name \"example.com\" rather than an error.\n\nThis behavior can lead to privilege escalation in programs using the idna package. For example, a program which performs privilege checks on the ASCII hostname may reject \"example.com\" but permit \"xn--example-.com\". If that program subsequently converts the ASCII hostname to Unicode, it will inadvertently permits access to the Unicode name \"example.com\"."
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-56853",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-56853?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "When a server is configured to support unencrypted HTTP/2, it reads a few bytes from each new connection to see if they contain the HTTP/2 client preface. ReadHeaderTimeout is unexpectedly not being applied when doing this."
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-56862",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-56862?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Handshake messages, such as KeyUpdate, are always considered as state-advancing, regardless of whether a handshake has been completed or not. As a result, a malicious client can keep sending KeyUpdate messages to force the server to keep performing key derivation operations indefinitely."
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-46600",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-46600?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Parsing an invalid SVCB or HTTPS RR can panic when the size of a parameter value overflows the message buffer."
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-33818",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-33818?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Enforce a recursion limit in Unmarshal to prevent stack exhaustion when parsing deeply-nested, recursive structures."
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-56859",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-56859?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Previously, DecodeElement would reset the depth counter causing it to never fire; this could lead to stack exhaustion."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56858",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-56858?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Previously, pathological inputs could close an unescaped '/' early, allowing for attack-controlled data to inject arbitrary content, potentially leading to XSS."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56860",
+    "vulnerable_range": ">=1.26.0-0,<1.26.6",
+    "fixed_by": "1.26.6",
+    "url": "https://scout.docker.com/v/CVE-2026-56860?s=golang&n=stdlib&t=golang&vr=%3E%3D1.26.0-0%2C%3C1.26.6",
+    "description": "Previously, resolving relative paths containing parent directory ('..') segments performed string conversions and buffer rewrites on each step, resulting in quadratic time complexity and high memory allocation overhead.\n\nNow, path resolution operates on a byte buffer using index-based backtracking for '..' segments, eliminating the quadratic time complexity and significantly reducing memory allocations."
+  }
+]
