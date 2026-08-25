@@ -1,22 +1,6 @@
 [
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2025-66382",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2025-66382?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In libexpat through 2.7.3, a crafted file with an approximate size of 2 MiB can lead to dozens of seconds of processing time."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-13757",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-13757?s=ubuntu&n=p11-kit&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw was found in p11-kit. The RPC message attribute parsing functions p11_rpc_message_get_attribute() and p11_rpc_message_get_attribute_array_value() form a mutually-recursive call chain with no recursion depth limit when processing nested CKA_WRAP_TEMPLATE, CKA_UNWRAP_TEMPLATE, and CKA_DERIVE_TEMPLATE attributes. An unauthenticated attacker with local access to the p11-kit RPC Unix domain socket can send a specially crafted request with deeply nested template attributes, causing stack exhaustion and crashing the p11-kit server process and its dependent services."
-  },
-  {
-    "severity": "MEDIUM",
     "source_id": "CVE-2026-27456",
     "vulnerable_range": ">=0",
     "fixed_by": null,
@@ -41,11 +25,27 @@
   },
   {
     "severity": "MEDIUM",
+    "source_id": "CVE-2026-54371",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-54371?s=ubuntu&n=attr&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "attr before version 2.6.0 contains a symlink traversal vulnerability in the getfattr and setfattr utilities that allows local attackers to escalate privileges by replacing a pathname component with a symbolic link during directory hierarchy traversal. Attackers who control a pathname component can redirect getfattr and setfattr operations to arbitrary files by substituting a symlink, leading to local privilege escalation when getfattr or setfattr is invoked by a privileged process over an attacker-controlled path."
+  },
+  {
+    "severity": "MEDIUM",
     "source_id": "CVE-2026-2219",
     "vulnerable_range": ">=0",
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-13757",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-13757?s=ubuntu&n=p11-kit&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw was found in p11-kit. The RPC message attribute parsing functions p11_rpc_message_get_attribute() and p11_rpc_message_get_attribute_array_value() form a mutually-recursive call chain with no recursion depth limit when processing nested CKA_WRAP_TEMPLATE, CKA_UNWRAP_TEMPLATE, and CKA_DERIVE_TEMPLATE attributes. An unauthenticated attacker with local access to the p11-kit RPC Unix domain socket can send a specially crafted request with deeply nested template attributes, causing stack exhaustion and crashing the p11-kit server process and its dependent services."
   },
   {
     "severity": "MEDIUM",
@@ -57,35 +57,11 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-54371",
+    "source_id": "CVE-2025-66382",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-54371?s=ubuntu&n=attr&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "attr before version 2.6.0 contains a symlink traversal vulnerability in the getfattr and setfattr utilities that allows local attackers to escalate privileges by replacing a pathname component with a symbolic link during directory hierarchy traversal. Attackers who control a pathname component can redirect getfattr and setfattr operations to arbitrary files by substituting a symlink, leading to local privilege escalation when getfattr or setfattr is invoked by a privileged process over an attacker-controlled path."
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2026-40228",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2026-27171",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-27171?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "zlib before 1.3.2 allows CPU consumption via crc32_combine64 and crc32_combine_gen64 because x2nmodp can do right shifts within a loop that has no termination condition."
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2024-56433",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
+    "url": "https://scout.docker.com/v/CVE-2025-66382?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In libexpat through 2.7.3, a crafted file with an approximate size of 2 MiB can lead to dozens of seconds of processing time."
   },
   {
     "severity": "LOW",
@@ -102,5 +78,29 @@
     "fixed_by": "8.5.0-2ubuntu10.13",
     "url": "https://scout.docker.com/v/CVE-2026-8932?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C8.5.0-2ubuntu10.13",
     "description": "libcurl would reuse a previously created connection even when some mTLS config related option had been changed that should have prohibited reuse.  libcurl keeps previously used connections in a connection pool for subsequent transfers to reuse if one of them matches the setup. However, some TLS settings related to client certificates were left out from the configuration match checks, making them match too easily. In particular options related to the private key."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2026-40228",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2024-56433",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2026-27171",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-27171?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "zlib before 1.3.2 allows CPU consumption via crc32_combine64 and crc32_combine_gen64 because x2nmodp can do right shifts within a loop that has no termination condition."
   }
 ]
