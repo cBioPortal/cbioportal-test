@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 REPO_URL="https://github.com/cBioPortal/cbioportal.git"
 DOCKER_REPO="cbioportal/cbioportal-dev"
@@ -21,6 +22,18 @@ fi
 # Create a temporary directory and cp --src
 ROOT_DIR=$(pwd)
 TEMP_DIR=$(mktemp -d)
+
+# Always remove the temp copy of --src (a full source tree, ~160MB), and exit with the status
+# that actually triggered the exit. Needed because `set -e` aborts on the first failing command,
+# which would otherwise skip any cleanup placed at the end of the script.
+cleanup() {
+  status=$?
+  cd "$ROOT_DIR" || true
+  rm -rf "$TEMP_DIR"
+  exit "$status"
+}
+trap cleanup EXIT
+
 cp -r "$src" "$TEMP_DIR/cbioportal"
 cd "$TEMP_DIR/cbioportal" || exit 1
 
@@ -32,9 +45,13 @@ if [ "$push" ] && [ "$push" = "true" ]; then
   echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin;
 fi
 
-#  Set up QEMU (for multi-platform builds)
-docker pull docker.io/tonistiigi/binfmt:latest
-docker run --rm --privileged docker.io/tonistiigi/binfmt:latest --install all
+#  Set up QEMU (for multi-platform builds). Best effort: emulation is only needed to build a
+#  foreign architecture, so a transient registry hiccup here should not fail an otherwise fine
+#  native-arch build. If emulation really was required, the buildx build below fails instead,
+#  with a clearer error.
+docker pull docker.io/tonistiigi/binfmt:latest \
+  && docker run --rm --privileged docker.io/tonistiigi/binfmt:latest --install all \
+  || echo "WARNING: could not set up QEMU/binfmt; cross-architecture builds may fail."
 
 # Set up Docker Buildx
 docker buildx use cbioportal-test > /dev/null || docker buildx create --name cbioportal-test --driver docker-container --use
@@ -85,7 +102,3 @@ if [ ! "$skip_web" = "true" ]; then
 else
   echo "Skipping web-shenandoah image!"
 fi
-
-# Cleanup
-cd "$ROOT_DIR"
-rm -rf "$TEMP_DIR"
