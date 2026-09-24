@@ -1,51 +1,27 @@
 [
   {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-65182",
-    "vulnerable_range": ">=10.1.0-M1,<10.1.58",
-    "fixed_by": "10.1.58",
-    "url": "https://scout.docker.com/v/CVE-2026-65182?s=github&n=tomcat-embed-core&ns=org.apache.tomcat.embed&t=maven&vr=%3E%3D10.1.0-M1%2C%3C10.1.58",
-    "description": "Improper Access Control, Incorrect Authorization vulnerability in Apache Tomcat leads to security constraint bypass if a constraint for a longer path is specified before a more restrictive constraint for a shorter sub-path.\n\nThis issue affects Apache Tomcat: from 11.0.0-M1 through 11.0.24, from 10.1.0-M1 through 10.1.57, from 9.0.0.M1 through 9.0.120, from 8.5.0 through 8.5.100, from 7.0.0 through 7.0.109.\n\nUsers are recommended to upgrade to version 11.0.25, 10.1.58, 9.0.121, which fixes the issue."
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-85091",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-85091?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "zlib versions 1.3.1.2 through 1.3.2 contain a heap buffer overflow vulnerability in the gz_vacate() function when processing non-blocking gzwrite() operations with stale external buffer pointers. Attackers can trigger the overflow by calling gzprintf() or gzvprintf() after a write stall, causing an unchecked memmove() to write beyond the internal input buffer boundary."
   },
   {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-68525",
-    "vulnerable_range": ">=10.1.0-M1,<10.1.58",
-    "fixed_by": "10.1.58",
-    "url": "https://scout.docker.com/v/CVE-2026-68525?s=github&n=tomcat-embed-core&ns=org.apache.tomcat.embed&t=maven&vr=%3E%3D10.1.0-M1%2C%3C10.1.58",
-    "description": "Incorrect Authorization vulnerability in Apache Tomcat's FORM authentication process allows the bypassing of a security constraint that limits user has access to a resource POST but not GET.\n\nThis issue affects Apache Tomcat: from 11.0.0-M1 through 11.0.24, from 10.1.0-M1 through 10.1.57, from 9.0.0.M1 through 9.0.120.\n\nThe following versions were EOL at the time the CVE was created but are known to be affected: from 8.5.0 through 8.5.100, from 7.0.0 through 7.0.109. Other unsupported versions may also be affected.\n\nUsers are recommended to upgrade to version 11.0.25, 10.1.58 or 9.0.121, which fixes the issue."
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-39113",
+    "vulnerable_range": "<3.45.1-1ubuntu2.8",
+    "fixed_by": "3.45.1-1ubuntu2.8",
+    "url": "https://scout.docker.com/v/CVE-2026-39113?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C3.45.1-1ubuntu2.8",
+    "description": "Buffer Overflow vulnerability in SQLite affected version source snapshots/builds containing Fossil check-in 8bdc0d485e3ad0c7a1e818da66f106951d496b05cbe61d12c2c448f2f24b6d5d (Git mirror 169f68ed88b34cb68f720191c64c058f2ccec508, 2026-03-11) and later snapshots/builds allows an attacker to cause a denial of service via the ext/misc/sqlar.c, sqlarUncompressFunc(), sqlar_uncompress(), sqlite3_value_int64(), sqlite3_malloc(int), uncompress() components"
   },
   {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-65905",
-    "vulnerable_range": ">=10.1.0-M1,<10.1.58",
-    "fixed_by": "10.1.58",
-    "url": "https://scout.docker.com/v/CVE-2026-65905?s=github&n=tomcat-embed-core&ns=org.apache.tomcat.embed&t=maven&vr=%3E%3D10.1.0-M1%2C%3C10.1.58",
-    "description": "Authentication Bypass by Capture-replay vulnerability in Apache Tomcat's DIGEST authenticator. If, before windowSize requests have been made, a client makes a DIGEST authenticated request with a nonceCount on the upper boundary of the replay window then that request is replayable once only while the associated nonceCount remains within the replay window.\n\nThis issue affects Apache Tomcat: from 11.0.0-M1 through 11.0.24, from 10.1.0-M1 through 10.1.57, from 9.0.0.M1 through 9.0.120.\n\nThe following versions were EOL at the time the CVE was created but are known to be affected: from 8.5.0 through 8.5.100, from 7.0.30 through 7.0.109. Other unsupported versions may also be affected.\n\nUsers are recommended to upgrade to version 11.0.25, 10.1.58 or 9.0.121, which fix the issue."
-  },
-  {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-8763",
-    "vulnerable_range": "<1.85",
-    "fixed_by": "1.85",
-    "url": "https://scout.docker.com/v/CVE-2026-8763?s=github&n=bcprov-jdk18on&ns=org.bouncycastle&t=maven&vr=%3C1.85",
-    "description": "In Bouncy Castle for Java before 1.85, Name Constraints bypass via trailing dot in rfc822Name and URI. This issue also affects Bouncy Castle for Java LTS before 2.73.12, and Bouncy Castle for Java FIPS (BC-FJA) before bc-fips 1.0.2.7 (1.0.X series), 2.0.2 (2.0.X series) and 2.1.3 (2.1.X series)."
-  },
-  {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-75595",
-    "vulnerable_range": "<=4.1.136.Final",
-    "fixed_by": "4.1.137.Final",
-    "url": "https://scout.docker.com/v/CVE-2026-75595?s=github&n=netty-handler&ns=io.netty&t=maven&vr=%3C%3D4.1.136.Final",
-    "description": "### Summary\nA fragmented TLS ClientHello whose handshake header spans multiple records makes Netty silently fall back to the default SslContext; where per-SNI selection is the sole mTLS gate, an unauthenticated attacker can bypass the route's mTLS requirement.\n\n### Details\nIn `io.netty.handler.ssl.SslClientHelloHandler#decode` the guard that should wait for the 4-byte handshake header checks the wrong offset - it ignores the 5-byte record header that precedes it - and therefore never fires:\n\n```java\nif (handshakeLength == -1) {\n    if (readerIndex + 4 > endOffset) {\n        // Need more data to read HandshakeType and handshakeLength (4 bytes)\n        return;\n    }\n```\n\nWhen the first record's payload is < 4 bytes, `handshakeLength = in.getUnsignedMedium(readerIndex + SslUtils.SSL_RECORD_HEADER_LENGTH + 1);` leads to `IndexOutOfBoundsException `. That is caught by the generic `catch (Exception)` block, which calls `select(ctx, null)` - this is the default `SslContext`. Fallback to default on parse failure is a problem when per-SNI selection is the sole mTLS gate.\n\n### Impact\nSNI routing bypass. Escalates to an unauthenticated mTLS bypass only when:\n- mTLS is enforced solely via per-SNI SslContext (clientAuth=REQUIRE)\n- the default/fallback SslContext is permissive (clientAuth=NONE/OPTIONAL)\n- no secondary peer-certificate verification exists at the application layer."
-  },
-  {
-    "severity": "HIGH",
-    "source_id": "CVE-2026-13506",
-    "vulnerable_range": "<1.85",
-    "fixed_by": "1.85",
-    "url": "https://scout.docker.com/v/CVE-2026-13506?s=github&n=bcprov-jdk18on&ns=org.bouncycastle&t=maven&vr=%3C1.85",
-    "description": "In Bouncy Castle for Java before 1.85, Lazy ASN.1 sequence forcing resets nesting-depth guard. This issue also affects Bouncy Castle for Java LTS before 2.73.12, and Bouncy Castle for Java FIPS (BC-FJA) before bc-fips 1.0.2.7 (1.0.X series), 2.0.2 (2.0.X series) and 2.1.3 (2.1.X series)."
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-19487",
+    "vulnerable_range": "<5.38.2-3.2ubuntu0.6",
+    "fixed_by": "5.38.2-3.2ubuntu0.6",
+    "url": "https://scout.docker.com/v/CVE-2026-19487?s=ubuntu&n=perl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C5.38.2-3.2ubuntu0.6",
+    "description": "Perl versions from 5.9.4 before 5.41.9 produce incorrect regular expression match results when a stale failure flag ends the Aho-Corasick prescan early in S_find_byclass.  The prescan walks the subject for positions where the full pattern could match, and the engine tries it from the leftmost one recorded. A failing transition sets the failed flag, and a later successful transition does not clear it, so the prescan reads the stale flag as a failure and stops before it can record a candidate that starts earlier. It takes a subject where one candidate is recorded and a later character then forces a fallback through a fail link that succeeds.  Example:  \"ABCDE\" =~ m/ABCF|BCDE|C/;    # matches C at offset 2, not BCDE \"ABCDE\" =~ m/ABCF|BCDE|C(G)/; # no match, BCDE missed  An alternation like this can miss input it should match, or match it on the wrong branch, so an access or filtering decision made from the result can be wrong."
   },
   {
     "severity": "MEDIUM",
@@ -57,11 +33,251 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-19487",
-    "vulnerable_range": "<5.38.2-3.2ubuntu0.6",
-    "fixed_by": "5.38.2-3.2ubuntu0.6",
-    "url": "https://scout.docker.com/v/CVE-2026-19487?s=ubuntu&n=perl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C5.38.2-3.2ubuntu0.6",
-    "description": "Perl versions from 5.9.4 before 5.41.9 produce incorrect regular expression match results when a stale failure flag ends the Aho-Corasick prescan early in S_find_byclass.  The prescan walks the subject for positions where the full pattern could match, and the engine tries it from the leftmost one recorded. A failing transition sets the failed flag, and a later successful transition does not clear it, so the prescan reads the stale flag as a failure and stops before it can record a candidate that starts earlier. It takes a subject where one candidate is recorded and a later character then forces a fallback through a fail link that succeeds.  Example:  \"ABCDE\" =~ m/ABCF|BCDE|C/;    # matches C at offset 2, not BCDE \"ABCDE\" =~ m/ABCF|BCDE|C(G)/; # no match, BCDE missed  An alternation like this can miss input it should match, or match it on the wrong branch, so an access or filtering decision made from the result can be wrong."
+    "source_id": "CVE-2026-80230",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-80230?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "When `CURLOPT_PINNEDPUBLICKEY` is configured alongside options that disable standard peer verification (`CURLOPT_SSL_VERIFYPEER = 0` and `CURLOPT_SSL_VERIFYHOST = 0`), libcurl fails to enforce public key pinning on connections established without a presented server certificate. Bypassing the pinning check under these disabled-verification conditions allows unauthenticated connections to succeed when they should be rejected."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-82209",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-82209?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "When libpsl support is enabled, libcurl fails to enforce the Public Suffix List boundary check when processing a `Set-Cookie` header where the `Domain` attribute explicitly matches an origin host that is itself a public suffix (e.g., `Domain=co.uk` set by `co.uk`).  Instead of coercing it into a strict host-only cookie, libcurl saves the cookie with wildcard domain scope (`.co.uk`). Consequently, the cookie is inappropriately included in subsequent outbound requests or HTTP redirects to arbitrary sibling subdomains under the same public suffix (e.g., `attacker.co.uk`)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-18924",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-18924?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw in libcurl's handling of HTTP/2 Server Push streams, when the parent handle is set to share connections with other handles, can lead to use-after-free in the cleanup process."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-19931",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-19931?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw in libcurl makes it wrongly reuse an HTTP connection setup for a given hostname using Negotiate authentication, when the initial request is done using empty credentials. This can make user B's request get sent over user A's previously authenticated connection."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-13608",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-13608?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw in the libcurl SASL negotiation for LDAP authentication allows an incomplete handshake sequence to be misinterpreted as a successful cryptographic verification. An attacker executing a Man-in-the-Middle (MITM) attack can inject a premature or shortcut response that bypasses complete peer validation."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-18374",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-18374?s=ubuntu&n=glibc&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "Passing an effectively empty string to the `,ccs=` syntax extension of the mode argument in the `fopen` function in the GNU C Library version 2.45 or earlier may result in a heap buffer overflow when the mode string input to the function is attacker controlled.    This usage pattern is not seen in applications in common GNU/Linux distributions and applications that process user-supplied values for `ccs` should not pass them through without validation."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-2219",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56408",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-56408?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 has an integer overflow in copyString."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56412",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-56412?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 does not consider XML_TOK_DATA_CHARS in doCdataSection and thus lacks handler call depth tracking for various calls from within handlers in cases of a policy violation. Thus, a use-after-free can occur. NOTE: this issue exists because of an incomplete fix for CVE-2026-50219."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56406",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56406?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "libexpat before 2.8.2 has an integer overflow in XML_ParseBuffer because it lacked a check that was present in XML_Parse."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56403",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-56403?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 has an integer overflow in storeAtts."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56405",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-56405?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 has an integer overflow in getAttributeId."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2025-59375",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2025-59375?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat in Expat before 2.7.2 allows attackers to trigger large dynamic memory allocations via a small document that is submitted for parsing."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2025-66382",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2025-66382?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In libexpat through 2.7.3, a crafted file with an approximate size of 2 MiB can lead to dozens of seconds of processing time."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56407",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56407?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "libexpat before 2.8.2 has an integer overflow in doProlog that is related to storeEntityValue and entity textLen."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-72522",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-72522?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "libexpat before 2.8.3 has an out-of-bounds read and resultant infinite loop because low surrogates are treated the same as high surrogates during Unicode processing in the *_toUtf16 functions."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-32776",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-32776?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.7.5 allows a NULL pointer dereference with empty external parameter entity content."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-76641",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-76641?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "Expat through 2.8.3 contains an out-of-bounds read vulnerability that allows attackers to trigger memory corruption by processing XML with external entity parsers created via XML_ExternalEntityParserCreate. A struct size mismatch between ELEMENT_TYPE members causes storeAtts to read the attIndex member past allocated memory boundaries, resulting in failure to normalize whitespace in non-CDATA attributes or a wild pointer dereference causing a segfault. This vulnerability was introduced by the fix for CVE-2026-66046."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-50219",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-50219?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 lacks handler call depth tracking for calls to XML_GetBuffer, XML_Parse, XML_ParseBuffer, XML_ParserFree, or XML_ParserReset from within handlers in cases of a policy violation. Thus, a use-after-free can occur,"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-41080",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-41080?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.0 uses insufficient entropy, and thus hash flooding can occur via a crafted XML document."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56411",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56411?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow in endDoctypeDecl via NOTATION declarations."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-32778",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-32778?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.7.5 allows a NULL pointer dereference in the function setContext on retry after an earlier ouf-of-memory condition."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56409",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56409?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow for the output filename when -d outputDir is used."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-45186",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-45186?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "In libexpat before 2.8.1, the computational complexity of attribute name collision checks allows a denial of service via moderately sized crafted XML input."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56131",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56131?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "libexpat before 2.8.2 lacks handler call depth tracking for calls to XML_ResumeParser from within handlers in cases of a policy violation. Thus, a use-after-free can occur (similar to the CVE-2026-50219 situation)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-66046",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-66046?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "Expat through 2.8.3 contains a denial of service vulnerability caused by quadratic algorithmic complexity in the storeAtts() function in xmlparse.c, where processing N specified attributes with non-normalized values triggers an O(N^2) linear scan of elementType->defaultAtts to determine CDATA status. A remote unauthenticated attacker can supply a single well-formed XML document of a few megabytes to an application parsing untrusted XML to cause excessive CPU consumption, resulting in denial of service without requiring authentication, external entity resolution, or non-default parser options."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-76957",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-76957?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "libexpat before 2.8.4 lacks handler call depth tracking with custom encoding callbacks. Thus, a use-after-free can occur. NOTE: this is similar to CVE-2026-50219, CVE-2026-56131 and CVE-2026-56412."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56410",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56410?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow in resolveSystemId."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56404",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-56404?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.8.2 has an integer overflow in addBinding."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-56132",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-56132?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In libexpat before 2.8.2, there is a heap-based buffer overflow in doProlog in xmlparse.c because scaffold backing array reallocation is mishandled when there is data-structure sharing across parsers."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-32777",
+    "vulnerable_range": "<2.6.1-2ubuntu0.5",
+    "fixed_by": "2.6.1-2ubuntu0.5",
+    "url": "https://scout.docker.com/v/CVE-2026-32777?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
+    "description": "libexpat before 2.7.5 allows an infinite loop while parsing DTD content."
   },
   {
     "severity": "MEDIUM",
@@ -88,276 +304,12 @@
     "description": "A flaw was found in GNU tar. When extracting an archive with the --one-top-level option, hardlink targets are not confined to the designated top-level directory and may resolve relative to the extraction working directory. A crafted archive can create hardlinks that escape the intended boundary and, when combined with a preexisting symbolic link under the working directory, may allow writing outside that boundary during a single extraction."
   },
   {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-18374",
+    "severity": "LOW",
+    "source_id": "CVE-2026-40228",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-18374?s=ubuntu&n=glibc&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Passing an effectively empty string to the `,ccs=` syntax extension of the mode argument in the `fopen` function in the GNU C Library version 2.45 or earlier may result in a heap buffer overflow when the mode string input to the function is attacker controlled.    This usage pattern is not seen in applications in common GNU/Linux distributions and applications that process user-supplied values for `ccs` should not pass them through without validation."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-2219",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-75596",
-    "vulnerable_range": "<=4.1.136.Final",
-    "fixed_by": "4.1.137.Final",
-    "url": "https://scout.docker.com/v/CVE-2026-75596?s=github&n=netty-handler&ns=io.netty&t=maven&vr=%3C%3D4.1.136.Final",
-    "description": "### Summary\n\nNetty's default SNI entrypoint reparses and recopies previously received ClientHello fragments on every additional TLS handshake record. A remote peer can send a small first record that advertises a large ClientHello length and then drip the body in many tiny records, causing **superlinear (quadratic) CPU work** before the handshake completes. With 4095 one-byte fragments, the handler recopies **8,386,560 bytes** from only **24,579 bytes** on the wire — a **341× amplification** ratio.\n\n### Affected Entrypoints\n\n- `io.netty.handler.ssl.SniHandler` — default constructors\n- `io.netty.handler.ssl.SslClientHelloHandler` — pre-handshake ClientHello aggregation path\n\n### Vulnerable Code Locations\n\n- `handler/src/main/java/io/netty/handler/ssl/SniHandler.java:85`\n- `handler/src/main/java/io/netty/handler/ssl/SslClientHelloHandler.java:75` (decode entry)\n- `handler/src/main/java/io/netty/handler/ssl/SslClientHelloHandler.java:165` (handshakeBuffer.clear)\n- `handler/src/main/java/io/netty/handler/ssl/SslClientHelloHandler.java:174` (writeBytes re-copy)\n- `codec-base/src/main/java/io/netty/handler/codec/ByteToMessageDecoder.java:294` (cumulation retention)\n\n### Exploit Path\n\n```\n1. TCP connection → SniHandler → SslClientHelloHandler.decode\n2. First record: TLS handshake header declaring large ClientHello length (e.g., 4096 bytes)\n3. Attacker sends thousands of tiny follow-on handshake records (1 byte each)\n4. On each fragment: handshakeBuffer.clear() + writeBytes() re-copies ALL accumulated body bytes\n5. Total bytes copied = n*(n+1)/2 where n = number of body bytes → quadratic\n6. Event-loop CPU exhausted before SslHandler takes over\n```\n\n### Impact\n\n- **Vulnerability Type:** Inefficient Algorithmic Complexity\n- An unauthenticated network attacker can drive disproportionate CPU consumption on the Netty event loop\n- Affects **all** Netty deployments using `SniHandler` for TLS termination (the default SNI path)\n- No privileges, user interaction, or special configuration required\n- Can degrade or stall TLS connection handling for all clients on the affected event loop\n- The attack requires only modest bandwidth (~25 KB) to trigger significant CPU work\n\n---\n### Credits\n\nFound by a security research team from the University of Sydney, focusing on detecting open source software vulnerabilities.\nLiyi Zhou: https://lzhou1110.github.io/\nZiyue Wang: https://zyy0530.github.io/\nStrick: https://str1ckl4nd.github.io/\nMaurice: https://maurice.busystar.org/\nChenchen Yu: https://7thparkk.github.io/"
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-19931",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-19931?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw in libcurl makes it wrongly reuse an HTTP connection setup for a given hostname using Negotiate authentication, when the initial request is done using empty credentials. This can make user B's request get sent over user A's previously authenticated connection."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-13608",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-13608?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw in the libcurl SASL negotiation for LDAP authentication allows an incomplete handshake sequence to be misinterpreted as a successful cryptographic verification. An attacker executing a Man-in-the-Middle (MITM) attack can inject a premature or shortcut response that bypasses complete peer validation."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-82209",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-82209?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "When libpsl support is enabled, libcurl fails to enforce the Public Suffix List boundary check when processing a `Set-Cookie` header where the `Domain` attribute explicitly matches an origin host that is itself a public suffix (e.g., `Domain=co.uk` set by `co.uk`).  Instead of coercing it into a strict host-only cookie, libcurl saves the cookie with wildcard domain scope (`.co.uk`). Consequently, the cookie is inappropriately included in subsequent outbound requests or HTTP redirects to arbitrary sibling subdomains under the same public suffix (e.g., `attacker.co.uk`)."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-80230",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-80230?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "When `CURLOPT_PINNEDPUBLICKEY` is configured alongside options that disable standard peer verification (`CURLOPT_SSL_VERIFYPEER = 0` and `CURLOPT_SSL_VERIFYHOST = 0`), libcurl fails to enforce public key pinning on connections established without a presented server certificate. Bypassing the pinning check under these disabled-verification conditions allows unauthenticated connections to succeed when they should be rejected."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-18924",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-18924?s=ubuntu&n=curl&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw in libcurl's handling of HTTP/2 Server Push streams, when the parent handle is set to share connections with other handles, can lead to use-after-free in the cleanup process."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-85091",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-85091?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "zlib versions 1.3.1.2 through 1.3.2 contain a heap buffer overflow vulnerability in the gz_vacate() function when processing non-blocking gzwrite() operations with stale external buffer pointers. Attackers can trigger the overflow by calling gzprintf() or gzvprintf() after a write stall, causing an unchecked memmove() to write beyond the internal input buffer boundary."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-39113",
-    "vulnerable_range": "<3.45.1-1ubuntu2.8",
-    "fixed_by": "3.45.1-1ubuntu2.8",
-    "url": "https://scout.docker.com/v/CVE-2026-39113?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C3.45.1-1ubuntu2.8",
-    "description": "Buffer Overflow vulnerability in SQLite affected version source snapshots/builds containing Fossil check-in 8bdc0d485e3ad0c7a1e818da66f106951d496b05cbe61d12c2c448f2f24b6d5d (Git mirror 169f68ed88b34cb68f720191c64c058f2ccec508, 2026-03-11) and later snapshots/builds allows an attacker to cause a denial of service via the ext/misc/sqlar.c, sqlarUncompressFunc(), sqlar_uncompress(), sqlite3_value_int64(), sqlite3_malloc(int), uncompress() components"
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56405",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-56405?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 has an integer overflow in getAttributeId."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56410",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56410?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow in resolveSystemId."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2025-66382",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2025-66382?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In libexpat through 2.7.3, a crafted file with an approximate size of 2 MiB can lead to dozens of seconds of processing time."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56407",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56407?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before 2.8.2 has an integer overflow in doProlog that is related to storeEntityValue and entity textLen."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56408",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-56408?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 has an integer overflow in copyString."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-32778",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-32778?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.7.5 allows a NULL pointer dereference in the function setContext on retry after an earlier ouf-of-memory condition."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-50219",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-50219?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 lacks handler call depth tracking for calls to XML_GetBuffer, XML_Parse, XML_ParseBuffer, XML_ParserFree, or XML_ParserReset from within handlers in cases of a policy violation. Thus, a use-after-free can occur,"
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56412",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-56412?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 does not consider XML_TOK_DATA_CHARS in doCdataSection and thus lacks handler call depth tracking for various calls from within handlers in cases of a policy violation. Thus, a use-after-free can occur. NOTE: this issue exists because of an incomplete fix for CVE-2026-50219."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56132",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56132?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In libexpat before 2.8.2, there is a heap-based buffer overflow in doProlog in xmlparse.c because scaffold backing array reallocation is mishandled when there is data-structure sharing across parsers."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56406",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56406?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before 2.8.2 has an integer overflow in XML_ParseBuffer because it lacked a check that was present in XML_Parse."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-32776",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-32776?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.7.5 allows a NULL pointer dereference with empty external parameter entity content."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56409",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56409?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow for the output filename when -d outputDir is used."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56403",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-56403?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 has an integer overflow in storeAtts."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-41080",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-41080?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.0 uses insufficient entropy, and thus hash flooding can occur via a crafted XML document."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56404",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-56404?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.8.2 has an integer overflow in addBinding."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-45186",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-45186?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "In libexpat before 2.8.1, the computational complexity of attribute name collision checks allows a denial of service via moderately sized crafted XML input."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2025-59375",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2025-59375?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat in Expat before 2.7.2 allows attackers to trigger large dynamic memory allocations via a small document that is submitted for parsing."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-66046",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-66046?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Expat through 2.8.3 contains a denial of service vulnerability caused by quadratic algorithmic complexity in the storeAtts() function in xmlparse.c, where processing N specified attributes with non-normalized values triggers an O(N^2) linear scan of elementType->defaultAtts to determine CDATA status. A remote unauthenticated attacker can supply a single well-formed XML document of a few megabytes to an application parsing untrusted XML to cause excessive CPU consumption, resulting in denial of service without requiring authentication, external entity resolution, or non-default parser options."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-32777",
-    "vulnerable_range": "<2.6.1-2ubuntu0.5",
-    "fixed_by": "2.6.1-2ubuntu0.5",
-    "url": "https://scout.docker.com/v/CVE-2026-32777?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.5",
-    "description": "libexpat before 2.7.5 allows an infinite loop while parsing DTD content."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56411",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56411?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "xmlwf in libexpat before 2.8.2 has an integer overflow in endDoctypeDecl via NOTATION declarations."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-56131",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-56131?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before 2.8.2 lacks handler call depth tracking for calls to XML_ResumeParser from within handlers in cases of a policy violation. Thus, a use-after-free can occur (similar to the CVE-2026-50219 situation)."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-72522",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-72522?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before 2.8.3 has an out-of-bounds read and resultant infinite loop because low surrogates are treated the same as high surrogates during Unicode processing in the *_toUtf16 functions."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-76957",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-76957?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before 2.8.4 lacks handler call depth tracking with custom encoding callbacks. Thus, a use-after-free can occur. NOTE: this is similar to CVE-2026-50219, CVE-2026-56131 and CVE-2026-56412."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-76641",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-76641?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Expat through 2.8.3 contains an out-of-bounds read vulnerability that allows attackers to trigger memory corruption by processing XML with external entity parsers created via XML_ExternalEntityParserCreate. A struct size mismatch between ELEMENT_TYPE members causes storeAtts to read the attIndex member past allocated memory boundaries, resulting in failure to normalize whitespace in non-CDATA attributes or a wild pointer dereference causing a segfault. This vulnerability was introduced by the fix for CVE-2026-66046."
+    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
   },
   {
     "severity": "LOW",
@@ -366,13 +318,5 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2026-40228",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
   }
 ]
