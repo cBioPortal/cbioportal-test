@@ -49,11 +49,27 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2021-31879",
+    "source_id": "CVE-2026-85091",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2021-31879?s=ubuntu&n=wget&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GNU Wget through 1.21.1 does not omit the Authorization header upon a redirect to a different origin, a related issue to CVE-2018-1000007."
+    "url": "https://scout.docker.com/v/CVE-2026-85091?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "zlib versions 1.3.1.2 through 1.3.2 contain a heap buffer overflow vulnerability in the gz_vacate() function when processing non-blocking gzwrite() operations with stale external buffer pointers. Attackers can trigger the overflow by calling gzprintf() or gzvprintf() after a write stall, causing an unchecked memmove() to write beyond the internal input buffer boundary."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-46675",
+    "vulnerable_range": "<1.6.43-5ubuntu0.7",
+    "fixed_by": "1.6.43-5ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-46675?s=ubuntu&n=libpng1.6&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.6.43-5ubuntu0.7",
+    "description": "[Use-after-free of zlib input in `png_read_end` after incomplete zTXt, iTXt or iCCP decompression]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-2219",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
   },
   {
     "severity": "MEDIUM",
@@ -73,43 +89,11 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-85091",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-85091?s=ubuntu&n=zlib&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "zlib versions 1.3.1.2 through 1.3.2 contain a heap buffer overflow vulnerability in the gz_vacate() function when processing non-blocking gzwrite() operations with stale external buffer pointers. Attackers can trigger the overflow by calling gzprintf() or gzvprintf() after a write stall, causing an unchecked memmove() to write beyond the internal input buffer boundary."
-  },
-  {
-    "severity": "MEDIUM",
     "source_id": "CVE-2025-66382",
     "vulnerable_range": ">=0",
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2025-66382?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "In libexpat through 2.7.3, a crafted file with an approximate size of 2 MiB can lead to dozens of seconds of processing time."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-2219",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-18508",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-18508?s=ubuntu&n=tar&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw was found in GNU tar. When extracting an archive with the --one-top-level option, hardlink targets are not confined to the designated top-level directory and may resolve relative to the extraction working directory. A crafted archive can create hardlinks that escape the intended boundary and, when combined with a preexisting symbolic link under the working directory, may allow writing outside that boundary during a single extraction."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-18477",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-18477?s=ubuntu&n=tar&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A TOCTOU (Time-of-Check Time-of-Use) vulnerability in GNU tar's incremental dumpdir 'X' rename handling allows a local attacker with write access to a directory being backed up to influence the restore process if the attacker has access to the system where the restore is being performed. During restoration, files or directories may be created, renamed or overwritten outside the intended extraction directory. This could lead to unauthorized file modification or, in some cases, privilege escalation. Exploitation does not require the attacker to modify or craft the archive, and standard backup and restore workflows—including extracting into a newly created directory without using the -P option do not mitigate the issue."
   },
   {
     "severity": "MEDIUM",
@@ -129,14 +113,6 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-46675",
-    "vulnerable_range": "<1.6.43-5ubuntu0.7",
-    "fixed_by": "1.6.43-5ubuntu0.7",
-    "url": "https://scout.docker.com/v/CVE-2026-46675?s=ubuntu&n=libpng1.6&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.6.43-5ubuntu0.7",
-    "description": "[Use-after-free of zlib input in `png_read_end` after incomplete zTXt, iTXt or iCCP decompression]"
-  },
-  {
-    "severity": "MEDIUM",
     "source_id": "CVE-2026-95512",
     "vulnerable_range": "<2.13.2+dfsg-1ubuntu0.2",
     "fixed_by": "2.13.2+dfsg-1ubuntu0.2",
@@ -144,12 +120,28 @@
     "description": "A flaw was found in FreeType, specifically within its CID font loader. A remote attacker could exploit this vulnerability by tricking a user into opening content that embeds or references a specially crafted CID-keyed font. This crafted font can cause repeated allocations and decryptions of subroutine data across multiple font dictionaries, leading to excessive memory and CPU consumption. This can result in a denial of service (DoS) for the application or service processing the font, potentially causing it to hang or terminate."
   },
   {
-    "severity": "LOW",
-    "source_id": "CVE-2024-56433",
+    "severity": "MEDIUM",
+    "source_id": "CVE-2021-31879",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
+    "url": "https://scout.docker.com/v/CVE-2021-31879?s=ubuntu&n=wget&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GNU Wget through 1.21.1 does not omit the Authorization header upon a redirect to a different origin, a related issue to CVE-2018-1000007."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-18508",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-18508?s=ubuntu&n=tar&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw was found in GNU tar. When extracting an archive with the --one-top-level option, hardlink targets are not confined to the designated top-level directory and may resolve relative to the extraction working directory. A crafted archive can create hardlinks that escape the intended boundary and, when combined with a preexisting symbolic link under the working directory, may allow writing outside that boundary during a single extraction."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-18477",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-18477?s=ubuntu&n=tar&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A TOCTOU (Time-of-Check Time-of-Use) vulnerability in GNU tar's incremental dumpdir 'X' rename handling allows a local attacker with write access to a directory being backed up to influence the restore process if the attacker has access to the system where the restore is being performed. During restoration, files or directories may be created, renamed or overwritten outside the intended extraction directory. This could lead to unauthorized file modification or, in some cases, privilege escalation. Exploitation does not require the attacker to modify or craft the archive, and standard backup and restore workflows—including extracting into a newly created directory without using the -P option do not mitigate the issue."
   },
   {
     "severity": "LOW",
@@ -158,5 +150,13 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2024-56433",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
   }
 ]
