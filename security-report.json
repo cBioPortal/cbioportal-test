@@ -17,6 +17,22 @@
   },
   {
     "severity": "HIGH",
+    "source_id": "CVE-2026-91776",
+    "vulnerable_range": ">=2.19.0,<=2.21.6",
+    "fixed_by": "2.21.7",
+    "url": "https://scout.docker.com/v/CVE-2026-91776?s=github&n=jackson-databind&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
+    "description": "### Summary\n\nWith `@JsonTypeInfo(use = Id.NAME, defaultImpl = ...)`, every distinct unknown\nraw type ID selects the same fallback deserializer but is retained as a\nseparate key in `TypeDeserializerBase._deserializers`. An attacker who can\nrepeatedly supply new unknown type IDs can grow this process-lifetime cache\nwithout a configured bound.\n\n### Details\n\nThe affected path is `TypeDeserializerBase._findDeserializer()`. After an\nunknown name-based type ID resolves to the configured fallback/default\nimplementation, jackson-databind caches the result under the attacker-provided\nraw `typeId`. Although all such IDs select the same fallback deserializer, each\nnew string remains a distinct cache key.\n\nThe behavior is runtime-confirmed in jackson-databind 2.22.1 and 3.2.1.\nCurrent 2.22 and 3.2 source branches retained the unbounded `_deserializers`\nmap and per-raw-ID cache write when rechecked. The earlier affected floor has\nnot been established, patched versions are: 2.18.11, 2.21.7, 2.22.3, 3.1.7 and 3.2.3.\n\nThe vulnerable application must enable name-based polymorphism with a\n`defaultImpl` or equivalent fallback, accept attacker-influenced type IDs, and\nreuse a long-lived mapper/type deserializer across requests.\n\nSuggested correction: avoid caching each unknown raw ID when every such ID\nresolves to the same fallback, use a fallback sentinel, or use an explicitly\nbounded concurrency-safe cache. A regression should contrast many distinct\nunknown IDs with repetitions of one unknown ID across requests.\n\n### PoC\n\nConfigure a polymorphic base type with\n`@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = Fallback.class)` and\ndeserialize inputs containing unknown type names through the same mapper.\nInspect `TypeDeserializerBase._deserializers` after the run.\n\nOn affected 2.x and 3.x versions, 10,000 distinct unknown raw type IDs produce\n10,000 retained cache entries even though every input selects the same\nfallback deserializer. A matched control that repeats one unknown ID 10,000\ntimes produces one retained entry. This isolates attacker-controlled key\ncardinality from ordinary request count.\n\n### Impact\n\nWhere the stated polymorphic fallback configuration is exposed to\nattacker-influenced type IDs, distinct inputs cause incremental\nprocess-lifetime memory retention and eventual availability pressure or\ndenial of service. This is not claimed as a single-request allocation spike,\nand no fixed bytes-per-ID or time-to-out-of-memory value is asserted. No\nconfidentiality, integrity, or code-execution impact is claimed.\n\nRequested credit: Daniel Birtwhistle"
+  },
+  {
+    "severity": "HIGH",
+    "source_id": "CVE-2026-91777",
+    "vulnerable_range": ">=2.19.0,<=2.21.6",
+    "fixed_by": "2.21.7",
+    "url": "https://scout.docker.com/v/CVE-2026-91777?s=github&n=jackson-databind&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
+    "description": "### Summary\n\nWhen an `@JsonIdentityInfo` collection or map first creates N unresolved\nobject-ID references and later resolves the same IDs in reverse order,\njackson-databind scans the remaining pending-reference accumulator for each\nresolution. A shallow JSON document whose size grows linearly can therefore\ncause quadratic CPU work during deserialization.\n\n### Details\n\nThe affected path is forward-reference completion in\n`CollectionDeserializer.CollectionReferringAccumulator.resolveForwardReference()`\nand the corresponding map implementation. The implementation performs a\nlinear search of the pending accumulator for every resolved object ID.\n\nThe behavior is runtime-confirmed in jackson-databind 2.5.0, 2.22.1, and\n3.2.1. Current 2.22 and 3.2 source branches retained the same design when\nrechecked. A 2.4.0 control fails closed before successful reverse-order\ncompletion, so 2.5.0 is the conservative runtime-confirmed affected floor.\nThe patched versions are: 2.18.11, 2.21.7, 2.22.3, 3.1.7 and 3.2.3.\n\nThe vulnerable application must deserialize attacker-influenced JSON into an\nidentity-enabled collection or map. The issue does not require deep nesting or\nsyntactically unusual JSON.\n\nSuggested correction: replace repeated linear lookup/removal with a keyed\npending-reference structure or another design that provides linear or\namortized-linear completion. A regression should preserve input order,\nduplicate-ID behavior, and unresolved-ID errors while bounding reverse-order\nresolution work.\n\n### PoC\n\nThe proof constructs a shallow collection containing N unresolved\n`@JsonIdentityInfo` references followed by definitions of those same IDs in\nreverse order. Its ID class counts `equals()` calls, giving a deterministic\nwork measure rather than a timing-dependent result.\n\nWith N=2,000, affected versions perform exactly 2,003,000 ID comparisons. An\nequally sized control in which every reference is already resolved performs\nzero comparisons in the pending-reference lookup path. The run is bounded to\na 512 MiB JVM. The result demonstrates quadratic growth: approximately\n`N * (N + 1) / 2` comparisons, plus fixed setup comparisons.\n\n### Impact\n\nAn unauthenticated source that can submit JSON to an application using the\naffected identity-enabled collection or map shape can consume quadratic CPU\nand exhaust a request-time or worker-capacity budget, causing denial of\nservice. The application model/configuration prerequisite is material. No\nconfidentiality, integrity, code-execution, or parser-depth impact is claimed.\n\nRequested credit: Daniel Birtwhistle"
+  },
+  {
+    "severity": "HIGH",
     "source_id": "CVE-2026-109518",
     "vulnerable_range": "<2.8.4ubuntu0.1",
     "fixed_by": "2.8.4ubuntu0.1",
@@ -41,22 +57,6 @@
   },
   {
     "severity": "HIGH",
-    "source_id": "CVE-2026-91776",
-    "vulnerable_range": ">=2.19.0,<=2.21.6",
-    "fixed_by": "2.21.7",
-    "url": "https://scout.docker.com/v/CVE-2026-91776?s=github&n=jackson-databind&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
-    "description": "### Summary\n\nWith `@JsonTypeInfo(use = Id.NAME, defaultImpl = ...)`, every distinct unknown\nraw type ID selects the same fallback deserializer but is retained as a\nseparate key in `TypeDeserializerBase._deserializers`. An attacker who can\nrepeatedly supply new unknown type IDs can grow this process-lifetime cache\nwithout a configured bound.\n\n### Details\n\nThe affected path is `TypeDeserializerBase._findDeserializer()`. After an\nunknown name-based type ID resolves to the configured fallback/default\nimplementation, jackson-databind caches the result under the attacker-provided\nraw `typeId`. Although all such IDs select the same fallback deserializer, each\nnew string remains a distinct cache key.\n\nThe behavior is runtime-confirmed in jackson-databind 2.22.1 and 3.2.1.\nCurrent 2.22 and 3.2 source branches retained the unbounded `_deserializers`\nmap and per-raw-ID cache write when rechecked. The earlier affected floor has\nnot been established, patched versions are: 2.18.11, 2.21.7, 2.22.3, 3.1.7 and 3.2.3.\n\nThe vulnerable application must enable name-based polymorphism with a\n`defaultImpl` or equivalent fallback, accept attacker-influenced type IDs, and\nreuse a long-lived mapper/type deserializer across requests.\n\nSuggested correction: avoid caching each unknown raw ID when every such ID\nresolves to the same fallback, use a fallback sentinel, or use an explicitly\nbounded concurrency-safe cache. A regression should contrast many distinct\nunknown IDs with repetitions of one unknown ID across requests.\n\n### PoC\n\nConfigure a polymorphic base type with\n`@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = Fallback.class)` and\ndeserialize inputs containing unknown type names through the same mapper.\nInspect `TypeDeserializerBase._deserializers` after the run.\n\nOn affected 2.x and 3.x versions, 10,000 distinct unknown raw type IDs produce\n10,000 retained cache entries even though every input selects the same\nfallback deserializer. A matched control that repeats one unknown ID 10,000\ntimes produces one retained entry. This isolates attacker-controlled key\ncardinality from ordinary request count.\n\n### Impact\n\nWhere the stated polymorphic fallback configuration is exposed to\nattacker-influenced type IDs, distinct inputs cause incremental\nprocess-lifetime memory retention and eventual availability pressure or\ndenial of service. This is not claimed as a single-request allocation spike,\nand no fixed bytes-per-ID or time-to-out-of-memory value is asserted. No\nconfidentiality, integrity, or code-execution impact is claimed.\n\nRequested credit: Daniel Birtwhistle"
-  },
-  {
-    "severity": "HIGH",
-    "source_id": "CVE-2026-91777",
-    "vulnerable_range": ">=2.19.0,<=2.21.6",
-    "fixed_by": "2.21.7",
-    "url": "https://scout.docker.com/v/CVE-2026-91777?s=github&n=jackson-databind&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
-    "description": "### Summary\n\nWhen an `@JsonIdentityInfo` collection or map first creates N unresolved\nobject-ID references and later resolves the same IDs in reverse order,\njackson-databind scans the remaining pending-reference accumulator for each\nresolution. A shallow JSON document whose size grows linearly can therefore\ncause quadratic CPU work during deserialization.\n\n### Details\n\nThe affected path is forward-reference completion in\n`CollectionDeserializer.CollectionReferringAccumulator.resolveForwardReference()`\nand the corresponding map implementation. The implementation performs a\nlinear search of the pending accumulator for every resolved object ID.\n\nThe behavior is runtime-confirmed in jackson-databind 2.5.0, 2.22.1, and\n3.2.1. Current 2.22 and 3.2 source branches retained the same design when\nrechecked. A 2.4.0 control fails closed before successful reverse-order\ncompletion, so 2.5.0 is the conservative runtime-confirmed affected floor.\nThe patched versions are: 2.18.11, 2.21.7, 2.22.3, 3.1.7 and 3.2.3.\n\nThe vulnerable application must deserialize attacker-influenced JSON into an\nidentity-enabled collection or map. The issue does not require deep nesting or\nsyntactically unusual JSON.\n\nSuggested correction: replace repeated linear lookup/removal with a keyed\npending-reference structure or another design that provides linear or\namortized-linear completion. A regression should preserve input order,\nduplicate-ID behavior, and unresolved-ID errors while bounding reverse-order\nresolution work.\n\n### PoC\n\nThe proof constructs a shallow collection containing N unresolved\n`@JsonIdentityInfo` references followed by definitions of those same IDs in\nreverse order. Its ID class counts `equals()` calls, giving a deterministic\nwork measure rather than a timing-dependent result.\n\nWith N=2,000, affected versions perform exactly 2,003,000 ID comparisons. An\nequally sized control in which every reference is already resolved performs\nzero comparisons in the pending-reference lookup path. The run is bounded to\na 512 MiB JVM. The result demonstrates quadratic growth: approximately\n`N * (N + 1) / 2` comparisons, plus fixed setup comparisons.\n\n### Impact\n\nAn unauthenticated source that can submit JSON to an application using the\naffected identity-enabled collection or map shape can consume quadratic CPU\nand exhaust a request-time or worker-capacity budget, causing denial of\nservice. The application model/configuration prerequisite is material. No\nconfidentiality, integrity, code-execution, or parser-depth impact is claimed.\n\nRequested credit: Daniel Birtwhistle"
-  },
-  {
-    "severity": "HIGH",
     "source_id": "CVE-2026-102554",
     "vulnerable_range": ">=4.0,<=33.7.1",
     "fixed_by": "33.7.2",
@@ -65,11 +65,83 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-2219",
+    "source_id": "CVE-2026-67693",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
+    "url": "https://scout.docker.com/v/CVE-2026-67693?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 does not reject end-entity X.509 certificates that contain a contradictory combination of Key Usage (KU) and Extended Key Usage (EKU). NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-95210",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-95210?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 does not reject a critical keyUsage extension when it cannot be processed, such as when extnValue is an ASN.1 NULL (05 00) instead of a BIT STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-95209",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-95209?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "Rejected reason: ** REJECT ** DO NOT USE THIS CANDIDATE NUMBER. ConsultIDs: none. Reason: This candidate was withdrawn by its CNA. Further investigation showed that it was not a security issue. Notes: none."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-88648",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-88648?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In GnuTLS v3.8.13, an excluded msUPN/SRV otherName is never checked. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-95184",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-95184?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 does not properly enforce name constraints, as demonstrated by a permitted subtree violation for \"EE O=Evil accepted although outside permitted O=Good.\" NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-88647",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-88647?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 can perhaps unexpectedly trust a certificate on the basis of Common Name when Subject Alternative Name has an SRV otherName (1.3.6.1.5.5.7.8.7) whose value is an OCTET STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-113730",
+    "vulnerable_range": "<=3.4.12",
+    "fixed_by": "3.4.13",
+    "url": "https://scout.docker.com/v/CVE-2026-113730?s=github&n=ognl&ns=ognl&t=maven&vr=%3C%3D3.4.12",
+    "description": "### Summary\n\nOGNL's optional *stricter invocation* mode maintains a block list that prevents expressions from directly calling methods on dangerous classes such as `Runtime`, `ProcessBuilder`, and `ClassLoader`. The block list filters on the **declaring class of the method OGNL invokes**. Because `java.lang.reflect.Method` (and `Constructor`/`Field`) are not on the list, an expression can use reflection as a proxy — `someMethod.invoke(target, args)` — to reach a blocked method. The real call (e.g. `ProcessBuilder.start()`) then executes inside the JDK reflection machinery and never passes back through OGNL's `invokeMethod`, so the block list never sees it.\n\n### Proof of concept\n\nUnder the default OGNL context (public-only access, stricter invocation enabled), the following expression creates a file even though a direct `new ProcessBuilder(...).start()` is blocked:\n\n```\n(#pb=new java.lang.ProcessBuilder({\"/usr/bin/touch\",\"rce-proof.txt\"}),\n #methods=@java.lang.ProcessBuilder@class.getMethods(),\n #names=#methods.{ #this.getName() },\n #startIdx=#names.indexOf(\"start\"),\n #methods[#startIdx].invoke(#pb, null))\n```\n\n### Impact and scope — please read carefully\n\n**This is hardening of a defense-in-depth secondary layer, not a break of OGNL's primary security boundary.**\n\nIn OGNL the stricter-invocation block list is a *secondary* mitigation. The **primary** access-control gate is the `MemberAccess` implementation supplied by the integrating framework or application, which OGNL consults on every constructor and method call. Frameworks that evaluate untrusted expressions are expected to install a restrictive `MemberAccess` — for example, Apache Struts' `SecurityMemberAccess`, which excludes dangerous classes and the `java.lang.reflect` package. Against such a `MemberAccess` this PoC is blocked at the very first step (the `new ProcessBuilder(...)` constructor), before reflection is ever reachable.\n\nThe default context that ships with OGNL intentionally allows all public members and is **not** designed to sandbox untrusted input. An application that evaluates attacker-controlled expressions with that permissive default already has many paths to code execution, and this technique is not required to achieve it.\n\n**You are affected only if all of the following hold:** (1) your application evaluates untrusted/attacker-controlled OGNL expressions, (2) it uses OGNL's default permissive `MemberAccess` (or an equivalently permissive one that allows `java.lang.reflect`), and (3) it relies on the stricter-invocation block list as its sandbox. **Properly configured consumers — including Apache Struts with its `SecurityMemberAccess` — are not affected.** The actual protection for untrusted-expression scenarios remains a correctly configured `MemberAccess`; the block list should not be treated as a sandbox.\n\n### Fix\n\n`java.lang.reflect.Method`, `java.lang.reflect.Constructor`, and `java.lang.reflect.Field` are added to the stricter-invocation block list, so reflection objects can no longer be used as invocation proxies in stricter mode. The `java.lang.invoke.MethodHandle` path was verified not to be exploitable (its signature-polymorphic `invoke`/`invokeExact` fail through OGNL's reflection-based invocation), so no additional classes are required.\n\n### Credit\n\nReported responsibly through Tidelift by 毛锐 (youyi.mr@alibaba-inc.com)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-107778",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-107778?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "MIT Kerberos 5 (krb5) through 1.22.2 contains a NULL pointer dereference in make_cred_list() in rd_cred.c that allows authenticated Kerberos clients to crash services by sending mismatched KRB-CRED arrays. Attackers can send forwarded credentials with more tickets than ticket_info entries through gss_accept_sec_context() to crash GSS-API acceptor services, causing denial of service."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-102473",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-102473?s=ubuntu&n=dash&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw was found in dash. When built without libc fnmatch, the internal pmatch() matcher implements * by unbounded recursion over candidate positions. A local user who can plant filenames, or otherwise feed that matcher, can make a short multi-star pattern such as *.*.*.*.*.tar.gz consume excessive CPU."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-102474",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-102474?s=ubuntu&n=dash&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw was found in dash. The printf builtin reserves four bytes before converting a Unicode \\u or \\U escape, but the multi-byte token can need five or six bytes. A local user who can supply such an escape to dash printf or echo %b, including through dash -c and a positional argument, can write one or two bytes past that reservation."
   },
   {
     "severity": "MEDIUM",
@@ -89,19 +161,19 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-102473",
+    "source_id": "CVE-2026-76642",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-102473?s=ubuntu&n=dash&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw was found in dash. When built without libc fnmatch, the internal pmatch() matcher implements * by unbounded recursion over candidate positions. A local user who can plant filenames, or otherwise feed that matcher, can make a short multi-star pattern such as *.*.*.*.*.tar.gz consume excessive CPU."
+    "url": "https://scout.docker.com/v/CVE-2026-76642?s=ubuntu&n=util-linux&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation."
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-102474",
+    "source_id": "CVE-2026-107161",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-102474?s=ubuntu&n=dash&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw was found in dash. The printf builtin reserves four bytes before converting a Unicode \\u or \\U escape, but the multi-byte token can need five or six bytes. A local user who can supply such an escape to dash printf or echo %b, including through dash -c and a positional argument, can write one or two bytes past that reservation."
+    "url": "https://scout.docker.com/v/CVE-2026-107161?s=ubuntu&n=cyrus-sasl2&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A heap-based buffer overflow flaw was found in Cyrus SASL. The add_to_challenge() function in the DIGEST-MD5 plugin computes the size of the buffer needed for a challenge/response field before DIGEST-MD5 quoting is applied, but does not recompute that size when quoting (escaping special characters) makes the value longer. The under-sized buffer is then passed to strcat(), causing a heap-based out-of-bounds write whose size depends on attacker-controlled input. A malicious or on-path DIGEST-MD5 (or HTTP Digest) server can trigger this flaw in a connecting client by supplying a crafted challenge field, such as realm or nonce, most likely resulting in a crash of the client application."
   },
   {
     "severity": "MEDIUM",
@@ -129,35 +201,11 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-76642",
+    "source_id": "CVE-2026-2219",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-76642?s=ubuntu&n=util-linux&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-107778",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-107778?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "MIT Kerberos 5 (krb5) through 1.22.2 contains a NULL pointer dereference in make_cred_list() in rd_cred.c that allows authenticated Kerberos clients to crash services by sending mismatched KRB-CRED arrays. Attackers can send forwarded credentials with more tickets than ticket_info entries through gss_accept_sec_context() to crash GSS-API acceptor services, causing denial of service."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-107161",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-107161?s=ubuntu&n=cyrus-sasl2&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A heap-based buffer overflow flaw was found in Cyrus SASL. The add_to_challenge() function in the DIGEST-MD5 plugin computes the size of the buffer needed for a challenge/response field before DIGEST-MD5 quoting is applied, but does not recompute that size when quoting (escaping special characters) makes the value longer. The under-sized buffer is then passed to strcat(), causing a heap-based out-of-bounds write whose size depends on attacker-controlled input. A malicious or on-path DIGEST-MD5 (or HTTP Digest) server can trigger this flaw in a connecting client by supplying a crafted challenge field, such as realm or nonce, most likely resulting in a crash of the client application."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-113730",
-    "vulnerable_range": "<=3.4.12",
-    "fixed_by": "3.4.13",
-    "url": "https://scout.docker.com/v/CVE-2026-113730?s=github&n=ognl&ns=ognl&t=maven&vr=%3C%3D3.4.12",
-    "description": "### Summary\n\nOGNL's optional *stricter invocation* mode maintains a block list that prevents expressions from directly calling methods on dangerous classes such as `Runtime`, `ProcessBuilder`, and `ClassLoader`. The block list filters on the **declaring class of the method OGNL invokes**. Because `java.lang.reflect.Method` (and `Constructor`/`Field`) are not on the list, an expression can use reflection as a proxy — `someMethod.invoke(target, args)` — to reach a blocked method. The real call (e.g. `ProcessBuilder.start()`) then executes inside the JDK reflection machinery and never passes back through OGNL's `invokeMethod`, so the block list never sees it.\n\n### Proof of concept\n\nUnder the default OGNL context (public-only access, stricter invocation enabled), the following expression creates a file even though a direct `new ProcessBuilder(...).start()` is blocked:\n\n```\n(#pb=new java.lang.ProcessBuilder({\"/usr/bin/touch\",\"rce-proof.txt\"}),\n #methods=@java.lang.ProcessBuilder@class.getMethods(),\n #names=#methods.{ #this.getName() },\n #startIdx=#names.indexOf(\"start\"),\n #methods[#startIdx].invoke(#pb, null))\n```\n\n### Impact and scope — please read carefully\n\n**This is hardening of a defense-in-depth secondary layer, not a break of OGNL's primary security boundary.**\n\nIn OGNL the stricter-invocation block list is a *secondary* mitigation. The **primary** access-control gate is the `MemberAccess` implementation supplied by the integrating framework or application, which OGNL consults on every constructor and method call. Frameworks that evaluate untrusted expressions are expected to install a restrictive `MemberAccess` — for example, Apache Struts' `SecurityMemberAccess`, which excludes dangerous classes and the `java.lang.reflect` package. Against such a `MemberAccess` this PoC is blocked at the very first step (the `new ProcessBuilder(...)` constructor), before reflection is ever reachable.\n\nThe default context that ships with OGNL intentionally allows all public members and is **not** designed to sandbox untrusted input. An application that evaluates attacker-controlled expressions with that permissive default already has many paths to code execution, and this technique is not required to achieve it.\n\n**You are affected only if all of the following hold:** (1) your application evaluates untrusted/attacker-controlled OGNL expressions, (2) it uses OGNL's default permissive `MemberAccess` (or an equivalently permissive one that allows `java.lang.reflect`), and (3) it relies on the stricter-invocation block list as its sandbox. **Properly configured consumers — including Apache Struts with its `SecurityMemberAccess` — are not affected.** The actual protection for untrusted-expression scenarios remains a correctly configured `MemberAccess`; the block list should not be treated as a sandbox.\n\n### Fix\n\n`java.lang.reflect.Method`, `java.lang.reflect.Constructor`, and `java.lang.reflect.Field` are added to the stricter-invocation block list, so reflection objects can no longer be used as invocation proxies in stricter mode. The `java.lang.invoke.MethodHandle` path was verified not to be exploitable (its signature-polymorphic `invoke`/`invokeExact` fail through OGNL's reflection-based invocation), so no additional classes are required.\n\n### Credit\n\nReported responsibly through Tidelift by 毛锐 (youyi.mr@alibaba-inc.com)."
+    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
   },
   {
     "severity": "MEDIUM",
@@ -216,52 +264,12 @@
     "description": "In PCRE2 before 10.48, pcre2_jit_match mishandles a previously copied subject being passed in as a context. An incorrect free operation can occur."
   },
   {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-67693",
+    "severity": "LOW",
+    "source_id": "CVE-2026-40228",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-67693?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 does not reject end-entity X.509 certificates that contain a contradictory combination of Key Usage (KU) and Extended Key Usage (EKU). NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-95210",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-95210?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 does not reject a critical keyUsage extension when it cannot be processed, such as when extnValue is an ASN.1 NULL (05 00) instead of a BIT STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-95209",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-95209?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Rejected reason: ** REJECT ** DO NOT USE THIS CANDIDATE NUMBER. ConsultIDs: none. Reason: This candidate was withdrawn by its CNA. Further investigation showed that it was not a security issue. Notes: none."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-88648",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-88648?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In GnuTLS v3.8.13, an excluded msUPN/SRV otherName is never checked. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-95184",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-95184?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 does not properly enforce name constraints, as demonstrated by a permitted subtree violation for \"EE O=Evil accepted although outside permitted O=Good.\" NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-88647",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-88647?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 can perhaps unexpectedly trust a certificate on the basis of Common Name when Subject Alternative Name has an SRV otherName (1.3.6.1.5.5.7.8.7) whose value is an OCTET STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
   },
   {
     "severity": "LOW",
@@ -270,13 +278,5 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2026-40228",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
   }
 ]
